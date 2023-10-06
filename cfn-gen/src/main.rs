@@ -97,16 +97,17 @@ Resources:"#, &parameters.bucket_name));
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      # Policies:
-      #   - PolicyName: lambda-benchmark-runtime-${{AWS::Region}}-policy
-      #     PolicyDocument:
-      #       Version: 2012-10-17
-      #         - Effect: Allow
-      #           Action:
-      #             - lambda:InvokeFunction
-      #           Resource: "*"
+      Policies:
+        - PolicyName: lambda-benchmark-runtime-${{AWS::Region}}-policy
+          PolicyDocument:
+            Version: 2012-10-17
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: "arn:aws:s3:::{}/test/*"
       Path: /
-"#));
+"#, &parameters.bucket_name));
 
     // Lambda functions
     for memory in &parameters.memory_sizes {
