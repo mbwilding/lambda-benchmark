@@ -10,9 +10,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install yq
         run: |
-          add-apt-repository ppa:rmescandon/yq
-          apt-get update
-          apt-get install yq -y
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt-get update
+          sudo apt-get install yq -y
       - name: "Configure AWS credentials"
         uses: aws-actions/configure-aws-credentials@v1
         with:
