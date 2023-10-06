@@ -108,9 +108,9 @@ Resources:"#);
     for memory in &parameters.memory_sizes {
         for lambda in manifests.iter() {
             for architecture in &lambda.architectures {
-                let combined = format!("{}-{}", &lambda.display_name, &architecture);
-                let lambda_name = format!("{}{}{}", &lambda.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", ""), memory);
-                let function_name = format!("lbd-benchmark-{}", &combined);
+                let combined = format!("{}-{}", &lambda.display_name, &architecture).to_lowercase();
+                let lambda_name = format!("{}{}{}", &lambda.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
+                let function_name = format!("lbd-benchmark-{}-{}", &combined, &memory);
                 let description = format!("{} | {} | {}", &lambda.display_name, &architecture, &memory);
                 let key = format!("runtimes/{}.zip", &combined);
 
