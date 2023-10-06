@@ -1,0 +1,6 @@
+display_name: "Python3-11"
+runtime: "python3.11"
+handler: "index.handler"
+architectures:
+  - x86_64
+  - arm64

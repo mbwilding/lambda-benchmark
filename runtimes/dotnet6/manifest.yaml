@@ -1,0 +1,6 @@
+display_name: "Dotnet6"
+runtime: "dotnet6"
+handler: "Lambda::Lambda.Function::Handler"
+architectures:
+  - x86_64
+  - arm64
