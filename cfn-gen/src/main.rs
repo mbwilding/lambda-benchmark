@@ -28,20 +28,20 @@ fn main() -> Result<()> {
     let parameters = load_parameters()?;
     let manifests = load_manifests()?;
     let cfn = build_cloudformation(&parameters, &manifests)?;
-    create_template_file("../../template.yml", &cfn)?;
+    create_template_file("template.yml", &cfn)?;
 
     Ok(())
 }
 
 fn load_parameters() -> Result<Parameters> {
-    let parameters = fs::read_to_string("../../parameters.yml")?;
+    let parameters = fs::read_to_string("parameters.yml")?;
     let parameters: Parameters = serde_yaml::from_str(&parameters)?;
 
     Ok(parameters)
 }
 
 fn load_manifests() -> Result<Vec<Manifest>> {
-    let manifests: Vec<Manifest> = WalkDir::new("../../runtimes/")
+    let manifests: Vec<Manifest> = WalkDir::new("runtimes/")
         .max_depth(2)
         .into_iter()
         .filter_map(Result::ok)
