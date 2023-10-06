@@ -893,7 +893,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lambda-perf"
+name = "lambda-benchmark"
 version = "1.0.0"
 dependencies = [
  "aws-config",

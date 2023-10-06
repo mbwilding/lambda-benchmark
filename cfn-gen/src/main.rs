@@ -66,7 +66,7 @@ fn build_cloudformation(parameters: &Parameters, manifests: &Vec<Manifest>) -> R
     let mut builder = String::new();
 
     // Setup the template
-    builder.push_str(r#"---
+    builder.push_str(&format!(r#"---
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: "Lambda Benchmark"
@@ -74,8 +74,11 @@ Description: "Lambda Benchmark"
 Globals:
   Function:
     Timeout: 900
+    Environment:
+        Variables:
+          BUCKET_NAME: "{}"
 
-Resources:"#);
+Resources:"#, &parameters.bucket_name));
 
     // IAM Roles
     builder.push_str(&format!(r#"

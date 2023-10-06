@@ -1,14 +1,10 @@
 exports.handler = async (event, context) => {
-    const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-    const s3 = new S3Client({ region: process.env.AWS_REGION });
-
     const region = process.env.AWS_REGION;
-    if (!region) {
-        throw new Error("AWS_REGION not set");
-    }
-
-    const bucket_name = `lambda-perf-${region}`;
+    const bucket_name = process.env.BUCKET_NAME;
     const bucket_key = `test/${context.functionName}/test.txt`;
+
+    const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+    const s3 = new S3Client({ region: region });
 
     try {
         for (let i = 0; i < 250; i++) {

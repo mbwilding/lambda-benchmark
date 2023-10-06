@@ -3,12 +3,8 @@ import boto3
 
 
 def handler(event, context):
-    try:
-        region = os.environ['AWS_REGION']
-    except KeyError:
-        raise Exception("AWS_REGION not set")
-
-    bucket_name = f'lambda-perf-{region}'
+    region = os.environ['AWS_REGION']
+    bucket_name = os.environ['BUCKET_NAME']
     bucket_key = f'test/{context.function_name}/test.txt'
 
     s3 = boto3.client('s3')

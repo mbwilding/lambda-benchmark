@@ -16,7 +16,7 @@ COPY src ./src
 RUN touch -a -m ./src/lib.rs
 RUN pip3 install cargo-lambda
 RUN /root/.cargo/bin/cargo lambda build --release --${ARCH}
-RUN zip -j /tmp/code.zip target/lambda/lambda-perf/bootstrap
+RUN zip -j /tmp/code.zip target/lambda/lambda-benchmark/bootstrap
 
 FROM scratch
 COPY --from=builder /tmp/code.zip /
