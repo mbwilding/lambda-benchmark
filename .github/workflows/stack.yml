@@ -29,6 +29,8 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SAM_CLI_TELEMETRY: 0
         run: |
+          stack_name=$(sed -n 's/stack_name: "\(.*\)"/\1/p' parameters.yml)
+          bucket_name=$(sed -n 's/bucket_name: "\(.*\)"/\1/p' parameters.yml)
           sam package \
             --template-file template.yml \
             --output-template-file packaged-template.yml \
