@@ -1,3 +1,4 @@
+stack_name: "cfn-lambda-benchmark"
 bucket_name: "bkt-lambda-benchmark"
 runtime_role: "iam-lambda-benchmark-runtime-role"
 
