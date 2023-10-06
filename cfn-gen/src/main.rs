@@ -112,11 +112,10 @@ Resources:"#, &parameters.bucket_name));
     for memory in &parameters.memory_sizes {
         for lambda in manifests.iter() {
             for architecture in &lambda.architectures {
-                let combined = format!("{}-{}", &lambda.path, &architecture).to_lowercase();
                 let lambda_name = format!("{}{}{}", &lambda.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
-                let function_name = format!("lbd-benchmark-{}-{}", &combined, &memory);
+                let function_name = format!("lbd-benchmark-{}-{}", format!("{}-{}", &lambda.path, &architecture.replace("_", "-")), &memory);
                 let description = format!("{} | {} | {}", &lambda.display_name, &architecture, &memory);
-                let key = format!("runtimes/{}.zip", &combined);
+                let key = format!("runtimes/code_{}.zip", format!("{}_{}", &lambda.path, &architecture));
 
                 builder.push_str(&format!(r#"
   LambdaBenchmark{}:
