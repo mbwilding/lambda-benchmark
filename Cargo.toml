@@ -1,0 +1,5 @@
+﻿[workspace]
+resolver = "2"
+members = [
+    "cfn-gen",
+]
