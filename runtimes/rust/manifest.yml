@@ -1,6 +1,7 @@
 display_name: "Rust"
 runtime: "provided.al2"
 handler: "bootstrap"
+path: "rust"
 architectures:
   - x86_64
   - arm64

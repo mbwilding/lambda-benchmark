@@ -1,6 +1,7 @@
 display_name: "NodeJS-18x"
 runtime: "nodejs18.x"
 handler: "index.handler"
+path: "nodejs18x"
 architectures:
   - x86_64
   - arm64
