@@ -98,7 +98,7 @@ Resources:"#, &parameters.bucket_name));
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: lambda-benchmark-runtime-${{AWS::Region}}-policy
+        - PolicyName: !Sub "lambda-benchmark-runtime-${{AWS::Region}}-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
