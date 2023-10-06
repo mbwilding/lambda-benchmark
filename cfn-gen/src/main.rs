@@ -183,7 +183,7 @@ Resources:"#, &parameters.bucket_name));
                                     OutputPath: $.Payload
                                     Parameters:
                                       Payload.$: $
-                                      FunctionName: arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}:$LATEST
+                                      FunctionName: !Sub "arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}:$LATEST"
                                     End: true"#, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size));
             }
             builder.push_str(r#"
