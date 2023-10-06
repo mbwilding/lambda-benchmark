@@ -1,4 +1,4 @@
-name: Deploy stack to AWS
+name: Stack
 
 on:
   workflow_dispatch:
