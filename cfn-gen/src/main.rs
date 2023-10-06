@@ -114,9 +114,9 @@ Resources:"#, &parameters.bucket_name));
         for manifest in manifests.iter() {
             for architecture in &manifest.architectures {
                 let lambda_name = format!("{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
-                let function_name = format!("lbd-benchmark-{}-{}", format!("{}-{}", &manifest.path, &architecture.replace("_", "-")), &memory);
+                let function_name = format!("lbd-benchmark-{}-{}-{}", &manifest.path, &architecture.replace("_", "-"), &memory);
                 let description = format!("{} | {} | {}", &manifest.display_name, &architecture, &memory);
-                let key = format!("runtimes/code_{}.zip", format!("{}_{}", &manifest.path, &architecture));
+                let key = format!("runtimes/code_{}_{}.zip", &manifest.path, &architecture);
 
                 builder.push_str(&format!(r#"
   LambdaBenchmark{}:
