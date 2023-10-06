@@ -27,9 +27,12 @@ jobs:
       - name: "SAM Deploy"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          SAM_CLI_TELEMETRY: 0
         run: |
           stack_name=$(sed -n 's/stack_name: "\(.*\)"/\1/p' parameters.yml)
+          echo "Stack Name: $stack_name"
           bucket_name=$(sed -n 's/bucket_name: "\(.*\)"/\1/p' parameters.yml)
+          echo "Bucket Name: $bucket_name"
           sam package \
             --template-file template.yml \
             --output-template-file packaged-template.yml \
@@ -37,5 +40,5 @@ jobs:
           sam deploy \
             --template-file packaged-template.yml \
             --stack-name $stack_name \
-            --capabilities CAPABILITY_IAM \
+            --capabilities CAPABILITY_NAMED_IAM \
             --region $AWS_REGION

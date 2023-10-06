@@ -104,22 +104,6 @@ Resources:"#);
       Path: /
 "#));
 
-    // Bucket
-    builder.push_str(&format!(r#"
-  Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: "{}"
-      VersioningConfiguration:
-        Status: Enabled
-      LifecycleConfiguration:
-        Rules:
-          - Id: ExpireOldVersions
-            Status: Enabled
-            NoncurrentVersionExpirationInDays: 7
-            Prefix: ""
-"#, &parameters.bucket_name));
-
     // Lambda functions
     for memory in &parameters.memory_sizes {
         for lambda in manifests.iter() {
