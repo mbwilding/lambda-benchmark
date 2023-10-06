@@ -180,7 +180,7 @@ Resources:"#, &parameters.bucket_name));
                                   {}-{}-{}:
                                     Type: Task
                                     Resource: arn:aws:states:::lambda:invoke
-                                    OutputPath: $.SdkHttpMetadata.HttpHeaders.x-amzn-RequestId
+                                    OutputPath: $.Payload
                                     Parameters:
                                       Payload.$: $
                                       FunctionName: !Sub "arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}"

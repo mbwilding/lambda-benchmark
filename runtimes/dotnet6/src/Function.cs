@@ -12,9 +12,8 @@ namespace Lambda;
 public class Function
 {
     // ReSharper disable once UnusedMember.Global
-    public async Task Handler(ILambdaContext context)
+    public async Task<string> Handler(ILambdaContext context)
     {
-        var region = Environment.GetEnvironmentVariable("AWS_REGION");
         var bucketName = Environment.GetEnvironmentVariable("BUCKET_NAME");
         var bucketKey = $"test/{context.FunctionName}/test.txt";
 
@@ -38,5 +37,7 @@ public class Function
             BucketName = bucketName,
             Key = bucketKey
         });
+
+        return context.LogStreamName;
     }
 }

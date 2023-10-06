@@ -3,7 +3,6 @@ import boto3
 
 
 def handler(event, context):
-    region = os.environ['AWS_REGION']
     bucket_name = os.environ['BUCKET_NAME']
     bucket_key = f'test/{context.function_name}/test.txt'
 
@@ -17,3 +16,5 @@ def handler(event, context):
 
     except Exception as e:
         raise Exception(f"An error occurred: {str(e)}")
+
+    return context.log_stream_name

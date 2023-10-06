@@ -10,8 +10,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<(), Error> {
-    let region = std::env::var("AWS_REGION")?;
+async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
     let bucket_name = std::env::var("BUCKET_NAME")?;
     let bucket_key = format!("test/{}/test.txt", event.context.env_config.function_name);
 
@@ -35,5 +34,5 @@ async fn func(event: LambdaEvent<Value>) -> Result<(), Error> {
         .send()
         .await?;
 
-    Ok(())
+    Ok(event.context.env_config.log_stream)
 }
