@@ -184,7 +184,7 @@ Resources:"#, &parameters.bucket_name));
                                     Parameters:
                                       Payload.$: $
                                       FunctionName: !Sub "arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}"
-                                    End: true"#, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size));
+                                    End: true"#, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture.replace("_", "-"), &memory_size));
             }
             builder.push_str(r#"
                             End: true"#);
