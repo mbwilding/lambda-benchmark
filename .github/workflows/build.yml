@@ -20,13 +20,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: "Find, Parse, Build and Deploy"
+      - name: "Find, and Build"
         run: |
           paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
           
           for path in $paths
           do
-            echo "Processing $path..."
+            echo "Processing '$path'..."
           
             architectures=$(yq e "$path/manifest.yml" -j | jq -r '.architectures[]')
           
@@ -34,9 +34,17 @@ jobs:
           
             for arch in $architectures
             do
-              echo "Building $path for architecture: $arch..."
+              echo "Building '$path' [$arch]..."
               (cd "$path" && ./build.sh "$arch")
             done
           
-            echo "Build and actions for $path complete."
+            echo "Building '$path' [$arch] completed"
+          done
+      - name: "Upload"
+        run: |
+          bucket_name=$(sed -n 's/bucket_name: "\(.*\)"/\1/p' parameters.yml)
+          files=$(find runtimes -name "code_*.zip")
+          for file in $files
+          do
+            aws s3 cp "$file" "s3://$bucket_name/runtimes/"
           done

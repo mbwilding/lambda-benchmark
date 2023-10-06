@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ARCH=$1
+path=$(sed -n 's/path: "\(.*\)"/\1/p' manifest.yml)
+zip="code_${path}_${ARCH}.zip"
 
-rm code_"${ARCH}".zip 2> /dev/null
+rm ${zip} 2> /dev/null
 
-zip -j code_"${ARCH}".zip index.py
+zip -j ${zip} index.py

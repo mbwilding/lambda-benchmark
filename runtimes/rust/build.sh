@@ -1,10 +1,11 @@
 #!/bin/bash
 
 ARCH=$1
-ARCH="${ARCH/_/-}"
+path=$(sed -n 's/path: "\(.*\)"/\1/p' manifest.yml)
+zip="code_${path}_${ARCH}.zip"
 
-rm "${DIR_NAME}"/code.zip 2> /dev/null
+rm ${zip} 2> /dev/null
 
-docker build . --build-arg ARCH="${ARCH}" -t mbwilding/rust
+docker build . --build-arg ARCH=${ARCH} -t mbwilding/rust
 dockerId=$(docker create mbwilding/rust)
-docker cp "$dockerId":/code.zip code_"${ARCH}".zip
+docker cp $dockerId:/code.zip ${zip}
