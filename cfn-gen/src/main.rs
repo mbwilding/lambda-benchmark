@@ -12,7 +12,6 @@ use walkdir::WalkDir;
 #[derive(Debug, Serialize, Deserialize)]
 struct Parameters {
     bucket_name: String,
-    runtime_role: String,
     memory_sizes: Vec<u16>,
 }
 
