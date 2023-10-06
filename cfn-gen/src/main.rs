@@ -81,7 +81,7 @@ Resources:"#);
   RoleRuntime:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: lambda-benchmark-runtime-${{AWS::Region}}-role
+      RoleName: !Sub "lambda-benchmark-runtime-${{AWS::Region}}-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -123,7 +123,7 @@ Resources:"#);
       Runtime: "{}"
       Architectures: ["{}"]
       Handler: "{}"
-      Role: "!GetAtt RoleRuntime.Arn"
+      Role: !GetAtt RoleRuntime.Arn
       MemorySize: {}
       CodeUri:
         Bucket: "{}"
