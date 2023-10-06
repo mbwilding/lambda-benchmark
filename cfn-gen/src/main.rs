@@ -111,12 +111,12 @@ Resources:"#, &parameters.bucket_name));
 
     // Lambda functions
     for memory in &parameters.memory_sizes {
-        for lambda in manifests.iter() {
-            for architecture in &lambda.architectures {
-                let lambda_name = format!("{}{}{}", &lambda.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
-                let function_name = format!("lbd-benchmark-{}-{}", format!("{}-{}", &lambda.path, &architecture.replace("_", "-")), &memory);
-                let description = format!("{} | {} | {}", &lambda.display_name, &architecture, &memory);
-                let key = format!("runtimes/code_{}.zip", format!("{}_{}", &lambda.path, &architecture));
+        for manifest in manifests.iter() {
+            for architecture in &manifest.architectures {
+                let lambda_name = format!("{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
+                let function_name = format!("lbd-benchmark-{}-{}", format!("{}-{}", &manifest.path, &architecture.replace("_", "-")), &memory);
+                let description = format!("{} | {} | {}", &manifest.display_name, &architecture, &memory);
+                let key = format!("runtimes/code_{}.zip", format!("{}_{}", &manifest.path, &architecture));
 
                 builder.push_str(&format!(r#"
   LambdaBenchmark{}:
@@ -132,10 +132,133 @@ Resources:"#, &parameters.bucket_name));
       CodeUri:
         Bucket: "{}"
         Key: "{}"
-"#, lambda_name, function_name, description, &lambda.runtime, architecture, &lambda.handler, memory, &parameters.bucket_name, &key));
+"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key));
             }
         }
     }
+
+    // State machine
+    builder.push_str(&format!(r#"
+  StateMachineBenchmarkRunner:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "ste-lambda-benchmark"
+      StateMachineType: STANDARD
+      TracingConfiguration:
+        Enabled: true
+      LoggingConfiguration:
+        Level: ALL
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt LogGroupStateMachine.Arn
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      Definition:
+        Comment: Lambda Benchmark Runner
+        StartAt: Parallel
+        States:
+          Parallel:
+            Type: Parallel
+            Branches:"#));
+    for manifest in manifests.iter() {
+        builder.push_str(&format!(r#"
+              - StartAt: {}-para
+                States:
+                  {}-para:
+                    Type: Parallel
+                    Branches:"#, &manifest.path, &manifest.path));
+        for architecture in &manifest.architectures {
+            builder.push_str(&format!(r#"
+                      - StartAt: {}-{}-para
+                        States:
+                          {}-{}-para:
+                            Type: Parallel
+                            Branches:"#, &manifest.path, &architecture, &manifest.path, &architecture));
+            for memory_size in &parameters.memory_sizes {
+                builder.push_str(&format!(r#"
+                              - StartAt: {}-{}-{}
+                                States:
+                                  {}-{}-{}:
+                                    Type: Task
+                                    Resource: arn:aws:states:::lambda:invoke
+                                    OutputPath: $.Payload
+                                    Parameters:
+                                      Payload.$: $
+                                      FunctionName: arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}:$LATEST
+                                    End: true"#, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size));
+            }
+            builder.push_str(r#"
+                            End: true"#);
+        }
+        builder.push_str(r#"
+                    End: true"#);
+    }
+    builder.push_str(r#"
+            End: true
+"#);
+
+    // State machine role
+    builder.push_str(r#"
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "iam-lambda-benchmark-step-functions-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub "states.${AWS::Region}.amazonaws.com"
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                Resource: "*"
+        - PolicyName: stateMachine
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
+                Resource:
+                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ste-lambda-benchmark"
+        - PolicyName: lambda
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:"#);
+    for manifest in manifests.iter() {
+        for architecture in &manifest.architectures {
+            for memory_size in &parameters.memory_sizes {
+                builder.push_str(&format!(r#"
+                  - !GetAtt LambdaBenchmark{}.Arn"#, format!("{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), &memory_size)));
+            }
+        }
+    }
+
+    // State machine log group
+    builder.push_str(r#"
+
+  LogGroupStateMachine:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/vendedlogs/states/lambda-benchmark
+      RetentionInDays: 7
+"#);
 
     Ok(builder)
 }
