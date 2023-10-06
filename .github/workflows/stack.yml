@@ -41,4 +41,5 @@ jobs:
             --template-file packaged-template.yml \
             --stack-name $stack_name \
             --capabilities CAPABILITY_NAMED_IAM \
-            --region $AWS_REGION
+            --region $AWS_REGION \
+            --s3-bucket $bucket_name
