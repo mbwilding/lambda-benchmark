@@ -323,6 +323,11 @@ Resources:"#,
                                             StartFromHead: false
                                             Limit: 1
                                           OutputPath: $.Events[0]
+                                          Retry:
+                                            - ErrorEquals: [States.ALL]
+                                              BackoffRate: 2
+                                              IntervalSeconds: 1
+                                              MaxAttempts: 3
                                           Next: {}-log-processor
                                         {}-log-processor:
                                           Type: Task
