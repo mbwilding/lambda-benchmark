@@ -74,12 +74,12 @@ Resources:"#,
     );
 
     // IAM Roles
-    builder.push_str(&format!(
+    builder.push_str(
         r#"
   RoleBacking:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-lambda-benchmark-backing-${{AWS::Region}}-role"
+      RoleName: !Sub "iam-lambda-benchmark-backing-${AWS::Region}-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -89,9 +89,39 @@ Resources:"#,
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+      Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Path: /
+      Policies:
+        - PolicyName: !Sub "iam-lambda-benchmark-backing-${AWS::Region}-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:UpdateFunctionConfiguration
+                Resource:"#,
+    );
+    for manifest in manifests.iter() {
+        for architecture in &manifest.architectures {
+            for memory in &parameters.memory_sizes {
+                let function_name = format!(
+                    "{}{}{}",
+                    &manifest.display_name.replace(['-', '_'], ""),
+                    &architecture.replace('_', "").to_uppercase(),
+                    &memory
+                );
+                builder.push_str(&format!(
+                    r#"
+                  - !GetAtt LambdaBenchmark{}.Arn"#,
+                    &function_name
+                ));
+            }
+        }
+    }
+
+    builder.push_str(&format!(
+        r#"
 
   RoleRuntime:
     Type: AWS::IAM::Role
@@ -287,47 +317,14 @@ Resources:"#,
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-force-cold
+                                      StartAt: {}-runtime
                                       States:
-                                        {}-force-cold:
-                                          Type: Task
-                                          Parameters:
-                                            FunctionName: lbd-benchmark-{}
-                                            Environment:
-                                              Variables:
-                                                BUCKET_NAME: {}
-                                                COLD_START.$: States.UUID()
-                                          Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionConfiguration
-                                          Next: {}-wait-cold
-                                        {}-wait-cold:
-                                          Type: Wait
-                                          Seconds: 5
-                                          Next: {}-runtime
                                         {}-runtime:
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                           OutputPath: $.Payload
-                                          Next: {}-wait-log
-                                        {}-wait-log:
-                                          Type: Wait
-                                          Seconds: 5
-                                          Next: {}-log
-                                        {}-log:
-                                          Type: Task
-                                          Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
-                                          Parameters:
-                                            LogGroupName: /aws/lambda/lbd-benchmark-{}
-                                            LogStreamName.$: $
-                                            StartFromHead: false
-                                            Limit: 1
-                                          OutputPath: $.Events[0]
-                                          Retry:
-                                            - ErrorEquals: [States.ALL]
-                                              BackoffRate: 2
-                                              IntervalSeconds: 1
-                                              MaxAttempts: 3
                                           Next: {}-log-processor
                                         {}-log-processor:
                                           Type: Task
@@ -338,24 +335,7 @@ Resources:"#,
                                           OutputPath: $.Payload
                                           End: true
                                     End: true"#,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &parameters.bucket_name,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &secondary,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &main,
-                    &main
+                    &main, &main, &main, &main, &secondary, &main, &main
                 ));
             }
             builder.push_str(
@@ -424,17 +404,16 @@ Resources:"#,
               - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
-                  - lambda:UpdateFunctionConfiguration
                 Resource:"#);
     for manifest in manifests.iter() {
         for architecture in &manifest.architectures {
-            for memory_size in &parameters.memory_sizes {
+            for memory in &parameters.memory_sizes {
                 builder.push_str(&format!(
                     r#"
                   - !GetAtt LambdaBenchmark{}{}{}.Arn"#,
                     &manifest.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
-                    &memory_size
+                    &memory
                 ));
             }
         }
