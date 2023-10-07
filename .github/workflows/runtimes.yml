@@ -1,4 +1,4 @@
-name: Code
+name: Runtimes
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: "Build and upload"
+      - name: "Build runtimes and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |

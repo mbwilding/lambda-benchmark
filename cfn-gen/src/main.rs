@@ -76,10 +76,27 @@ Resources:"#,
     // IAM Roles
     builder.push_str(&format!(
         r#"
+  RoleBacking:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "iam-lambda-benchmark-backing-${{AWS::Region}}-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+
   RoleRuntime:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "lambda-benchmark-runtime-${{AWS::Region}}-role"
+      RoleName: !Sub "iam-lambda-benchmark-runtime-${{AWS::Region}}-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -92,7 +109,7 @@ Resources:"#,
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: !Sub "lambda-benchmark-runtime-${{AWS::Region}}-policy"
+        - PolicyName: !Sub "iam-lambda-benchmark-runtime-${{AWS::Region}}-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -107,6 +124,27 @@ Resources:"#,
     ));
 
     // Lambda functions
+    builder.push_str(&format!(
+        r#"
+  LambdaNumToArray:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "lbd-benchmark-num-to-array"
+      Description: "Lambda Benchmark | Number to Array"
+      Runtime: "provided.al2"
+      Architectures: ["arm64"]
+      Handler: "bootstrap"
+      Role: !GetAtt RoleBacking.Arn
+      MemorySize: 128
+      Timeout: 5
+      CodeUri:
+        Bucket: "{}"
+        Key: "{}"
+"#,
+        &parameters.bucket_name, "backing/num_to_array.zip"
+    ));
+
+    // Runtime Lambda functions
     for memory in &parameters.memory_sizes {
         for manifest in manifests.iter() {
             for architecture in &manifest.architectures {
@@ -300,7 +338,8 @@ Resources:"#,
             Statement:
               - Effect: Allow
                 Action: lambda:InvokeFunction
-                Resource:"#);
+                Resource:
+                  - !GetAtt LambdaNumToArray.Arn"#);
     for manifest in manifests.iter() {
         for architecture in &manifest.architectures {
             for memory_size in &parameters.memory_sizes {

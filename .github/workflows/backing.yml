@@ -1,0 +1,49 @@
+name: Backing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Setup yq"
+        uses: dcarbone/install-yq-action@v1.1.1
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: "Install Rust toolchain"
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: "Install Cargo Lambda"
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: cargo-lambda/cargo-lambda
+          platform: linux
+          arch: aarch64
+      - name: "Build backing and upload"
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          parameters_json=$(yq -o=json '.' parameters.yml)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
+
+          sudo apt-get update -y
+          sudo apt-get install -y openssl libssl-dev gcc zip python3-pip
+          
+          cargo lambda build --release --bin cfn-gen --target=aarch64-unknown-linux-gnu --output-format zip
+          cargo lambda build --release --bin num-to-array --target=aarch64-unknown-linux-gnu --output-format zip
+
+          for src in $(find target/lambda -name "bootstrap.zip"); do
+            name=$(basename "$(dirname "$src")")
+            aws s3 cp "$file" s3://$bucket_name/backing/ > /dev/null 2>&1
+            echo "Uploaded '$file' to 's3://$bucket_name/backing/'"
+          done
