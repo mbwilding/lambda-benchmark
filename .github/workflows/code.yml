@@ -25,8 +25,8 @@ jobs:
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
           if ! aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
-          aws s3api create-bucket --bucket $bucket_name --region $AWS_REGION \
-          --create-bucket-configuration LocationConstraint=$AWS_REGION
+            aws s3api create-bucket --bucket $bucket_name --region $AWS_REGION \
+            --create-bucket-configuration LocationConstraint=$AWS_REGION
           fi
 
           file_paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
