@@ -18,11 +18,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
       - name: "Install Rust toolchain"
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: |
+          rustup toolchain install stable; \
+          rustup target install x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; \
+          rustup component add rustfmt clippy; \
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin;
       - name: "Install Zig"
         run: |
           zigVersion=$(curl -s https://github.com/ziglang/zig/releases | grep -oP 'href="/ziglang/zig/releases/tag/\K([0-9]+\.[0-9]+\.[0-9]+)' | head -n 1); \
