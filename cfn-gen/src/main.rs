@@ -282,13 +282,23 @@ Resources:"#,
                                       StartAt: {}-{}-{}
                                       States:
                                         {}-{}-{}:
-                                          End: true
-                                          OutputPath: $.Payload
+                                          Type: Task
+                                          Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
                                             Payload.$: $
-                                          Resource: arn:aws:states:::lambda:invoke
+                                          OutputPath: $.Payload
+                                          Next: GetLogEvents
+                                        {}-{}-{}-log:
                                           Type: Task
+                                          Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
+                                          Parameters:
+                                            LogGroupName: "/aws/lambda/lbd-benchmark-{}-{}-{}"
+                                            LogStreamName.$: $
+                                            StartFromHead: false
+                                            Limit: 1
+                                          OutputPath: $.Events[0].Message
+                                          End: true
                                     End: true"#,
                     &manifest.path,
                     &architecture,
@@ -304,7 +314,13 @@ Resources:"#,
                     &memory,
                     &manifest.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
-                    memory
+                    memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture.replace('_', "-"),
+                    &memory
                 ));
             }
             builder.push_str(
@@ -350,6 +366,7 @@ Resources:"#,
                   - logs:PutResourcePolicy
                   - logs:DescribeResourcePolicies
                   - logs:DescribeLogGroups
+                  - logs:GetLogEvents
                 Resource: "*"
         - PolicyName: stateMachine
           PolicyDocument:
