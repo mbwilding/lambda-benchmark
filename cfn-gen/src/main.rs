@@ -236,6 +236,14 @@ Resources:"#,
         Comment: Lambda Benchmark Runner
         StartAt: Parallel
         States:
+          Iterations:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName: !GetAtt LambdaNumToArray.Arn
+            Next: Parallel
           Parallel:
             Type: Parallel
             Branches:"#,
