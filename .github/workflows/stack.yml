@@ -33,8 +33,8 @@ jobs:
         run: |
           parameters_json=$(yq -o=json '.' parameters.yml)
 
-          stack_name=$(jq -r '.stack_name' <<< "$parameters_json")
-          bucket_name=$(jq -r '.bucket_name' <<< "$parameters_json")
+          stack_name=$(jq -r '.stack_name' <<< $parameters_json)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
           sam package \
             --template-file template.yml \
