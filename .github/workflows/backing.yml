@@ -21,8 +21,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Install Zig toolchain
         uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.11.0
       - name: Install Cargo Lambda
-        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
           repo: cargo-lambda/cargo-lambda
           platform: linux
