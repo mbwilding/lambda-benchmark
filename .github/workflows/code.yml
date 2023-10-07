@@ -21,7 +21,7 @@ jobs:
         run: |
           file_paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
 
-          parameters_json=$(yq e "parameters.yml" -j)
+          parameters_json=$(yq -o=json '.' parameters.yml)
 
           bucket_name=$(jq -r ".bucket_name' <<< "$parameters_json")
 
@@ -29,7 +29,7 @@ jobs:
           do
             echo "::group::Processing '$file_path'..."
 
-            manifest_json=$(yq e "$file_path/manifest.yml" -j)
+            manifest_json=$(yq -o=json '.' "$file_path/manifest.yml" -j)
 
             architectures=$(jq -r '.architectures[]' <<< "$manifest_json")
             memory_sizes=$(jq -r '.memory_sizes[]' <<< "$parameters_json")
