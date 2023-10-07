@@ -40,12 +40,8 @@ jobs:
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")
-            $s3_key="backing/${name}.zip"
+            s3_key="backing/${name}.zip"
             dst="s3://$bucket_name/$s3_key"
-          
-            echo "src: $src"
-            echo "dst: $dst"
-            echo "s3_key: $s3_key"
           
             aws s3 cp "$src" "$dst"
             echo "Uploaded '$src' to 's3://$bucket_name/$s3_key'"
