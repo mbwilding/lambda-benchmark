@@ -36,6 +36,7 @@ jobs:
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
+          sudo apt install zig -y
           cargo lambda build --release --arm64 --output-format zip
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
