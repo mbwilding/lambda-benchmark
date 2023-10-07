@@ -17,7 +17,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: "Check bucket exists"
+      - name: "Build and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
@@ -25,11 +25,10 @@ jobs:
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
           if ! aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
-            aws s3api create-bucket --bucket $bucket_name --region $AWS_REGION \
-            --create-bucket-configuration LocationConstraint=$AWS_REGION
+          aws s3api create-bucket --bucket $bucket_name --region $AWS_REGION \
+          --create-bucket-configuration LocationConstraint=$AWS_REGION
           fi
-      - name: "Build and upload"
-        run: |
+
           file_paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
 
           for file_path in $file_paths
