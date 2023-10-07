@@ -298,13 +298,21 @@ Resources:"#,
                                                 BUCKET_NAME: {}
                                                 COLD_START.$: States.UUID()
                                           Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionConfiguration
-                                          Next: {}
-                                        {}:
+                                          Next: {}-wait-cold
+                                        {}-wait-cold:
+                                          Type: Wait
+                                          Seconds: 5
+                                          Next: {}-runtime
+                                        {}-runtime:
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                           OutputPath: $.Payload
+                                          Next: {}-wait-log
+                                        {}-wait-log:
+                                          Type: Wait
+                                          Seconds: 5
                                           Next: {}-log
                                         {}-log:
                                           Type: Task
@@ -315,6 +323,14 @@ Resources:"#,
                                             StartFromHead: false
                                             Limit: 1
                                           OutputPath: $.Events[0].Message
+                                          Next: {}-log-processor
+                                        {}-log-processor:
+                                          Type: Task
+                                          Resource: arn:aws:states:::lambda:invoke
+                                          Parameters:
+                                            Payload.$: $
+                                            FunctionName: !GetAtt LambdaLogProcessor.Arn
+                                          OutputPath: $.Payload
                                           End: true
                                     End: true"#,
                     &main,
@@ -325,7 +341,13 @@ Resources:"#,
                     &parameters.bucket_name,
                     &main,
                     &main,
+                    &main,
+                    &main,
                     &secondary,
+                    &main,
+                    &main,
+                    &main,
+                    &main,
                     &main,
                     &main,
                     &main
