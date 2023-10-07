@@ -77,8 +77,9 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     Ok(json!(extracted_data))
 }
 
+#[allow(dead_code)]
 async fn force_cold_start(input: &Input, aws_config: &SdkConfig) -> Result<()> {
-    let lambda = aws_sdk_lambda::Client::new(&aws_config);
+    let lambda = aws_sdk_lambda::Client::new(aws_config);
 
     let env_vars = lambda
         .get_function_configuration()
