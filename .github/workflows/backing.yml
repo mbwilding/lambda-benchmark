@@ -31,7 +31,7 @@ jobs:
           arch: aarch64
       - name: "Install Zig"
         run: |
-          snap install zig --classic --beta
+          sudo snap install zig --classic --beta
       - name: "Build backing and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
