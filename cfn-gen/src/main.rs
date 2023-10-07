@@ -328,7 +328,7 @@ Resources:"#,
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
-                                            Payload.$: $
+                                            Payload.$: "\"$\""
                                             FunctionName: !GetAtt LambdaLogProcessor.Arn
                                           OutputPath: $.Payload
                                           End: true
