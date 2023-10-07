@@ -126,10 +126,10 @@ Resources:"#,
     // Backing Lambda functions
     builder.push_str(&format!(
         r#"
-  LambdaNumToArray:
+  LambdaLogProcessor:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: "lbd-benchmark-num-to-array"
+      FunctionName: "lbd-benchmark-log-processor"
       Description: "Lambda Benchmark | Number to Array"
       Runtime: "provided.al2"
       Architectures: ["arm64"]
@@ -141,13 +141,13 @@ Resources:"#,
         Bucket: "{}"
         Key: "{}"
 
-  LogGroupNumToArray:
+  LogGroupLogProcessor:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: "/aws/lambda/lbd-benchmark-num-to-array"
+      LogGroupName: "/aws/lambda/lbd-benchmark-log-processor"
       RetentionInDays: {}
 "#,
-        &parameters.bucket_name, "backing/num-to-array.zip", &parameters.log_retention_in_days
+        &parameters.bucket_name, "backing/log-processor.zip", &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions
@@ -256,88 +256,76 @@ Resources:"#,
             &manifest.path, &manifest.path
         ));
         for architecture in &manifest.architectures {
+            let architecture = architecture.replace('_', "-");
+            let main = format!("{}-{}", &manifest.path, &architecture);
             builder.push_str(&format!(
                 r#"
-                      - StartAt: {}-{}-para
+                      - StartAt: {}-para
                         States:
-                          {}-{}-para:
+                          {}-para:
                             Type: Parallel
                             Branches:"#,
-                &manifest.path, &architecture, &manifest.path, &architecture
+                &main, &main
             ));
             for memory in &parameters.memory_sizes {
+                let main = format!("{}-{}-{}", &manifest.path, &architecture, memory);
+                let secondary = format!(
+                    "{}{}{}",
+                    &manifest.display_name,
+                    &architecture.replace('_', "").to_uppercase(),
+                    memory
+                )
+                .replace(['-', '_'], "");
                 builder.push_str(&format!(
                     r#"
-                              - StartAt: {}-{}-{}-iter
+                              - StartAt: {}-iter
                                 States:
-                                  {}-{}-{}-iter:
+                                  {}-iter:
                                     Type: Map
                                     MaxConcurrency: 1
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-{}-{}-force-cold
+                                      StartAt: {}-force-cold
                                       States:
-                                        {}-{}-{}-force-cold:
+                                        {}-force-cold:
                                           Type: Task
                                           Parameters:
-                                            FunctionName: lbd-benchmark-{}-{}-{}
+                                            FunctionName: lbd-benchmark-{}
                                             Environment:
                                               Variables:
                                                 COLD_START.$: States.UUID()
                                           Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionConfiguration
-                                          Next: {}-{}-{}
-                                        {}-{}-{}:
+                                          Next: {}
+                                        {}:
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
-                                            FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
+                                            FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                           OutputPath: $.Payload
-                                          Next: {}-{}-{}-log
-                                        {}-{}-{}-log:
+                                          Next: {}-log
+                                        {}-log:
                                           Type: Task
                                           Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
                                           Parameters:
-                                            LogGroupName: /aws/lambda/lbd-benchmark-{}-{}-{}
+                                            LogGroupName: /aws/lambda/lbd-benchmark-{}
                                             LogStreamName.$: $
                                             StartFromHead: false
                                             Limit: 1
                                           OutputPath: $.Events[0].Message
                                           End: true
                                     End: true"#,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture.replace('_', "-"),
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.display_name.replace(['-', '_'], ""),
-                    &architecture.replace('_', "").to_uppercase(),
-                    memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture,
-                    &memory,
-                    &manifest.path,
-                    &architecture.replace('_', "-"),
-                    &memory
+                    &main,
+                    &main,
+                    &main,
+                    &main,
+                    &main,
+                    &main,
+                    &main,
+                    &secondary,
+                    &main,
+                    &main,
+                    &main
                 ));
             }
             builder.push_str(
@@ -400,11 +388,14 @@ Resources:"#,
           PolicyDocument:
             Statement:
               - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:
+                  - !GetAtt LambdaLogProcessor.Arn
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                   - lambda:UpdateFunctionConfiguration
-                Resource:
-                  - !GetAtt LambdaNumToArray.Arn"#);
+                Resource:"#);
     for manifest in manifests.iter() {
         for architecture in &manifest.architectures {
             for memory_size in &parameters.memory_sizes {
