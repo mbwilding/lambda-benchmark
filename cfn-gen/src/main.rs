@@ -65,19 +65,12 @@ fn build_cloudformation(parameters: &Parameters, manifests: &Vec<Manifest>) -> R
     let mut builder = String::new();
 
     // Setup the template
-    builder.push_str(&format!(r#"---
+    builder.push_str(r#"---
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: "Lambda Benchmark"
 
-Globals:
-  Function:
-    Timeout: 900
-    Environment:
-        Variables:
-          BUCKET_NAME: "{}"
-
-Resources:"#, &parameters.bucket_name));
+Resources:"#);
 
     // IAM Roles
     builder.push_str(&format!(r#"
@@ -129,10 +122,20 @@ Resources:"#, &parameters.bucket_name));
       Handler: "{}"
       Role: !GetAtt RoleRuntime.Arn
       MemorySize: {}
+      Timeout: 900
       CodeUri:
         Bucket: "{}"
         Key: "{}"
-"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key));
+      Environment:
+          Variables:
+            BUCKET_NAME: "{}"
+
+  LogGroupLambdaBenchmark{}:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/{}"
+      RetentionInDays: 7
+"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key, &parameters.bucket_name, &lambda_name, &function_name));
             }
         }
     }
