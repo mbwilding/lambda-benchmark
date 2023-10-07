@@ -294,6 +294,7 @@ Resources:"#,
                                             FunctionName: lbd-benchmark-{}
                                             Environment:
                                               Variables:
+                                                BUCKET_NAME: {}
                                                 COLD_START.$: States.UUID()
                                           Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionConfiguration
                                           Next: {}
@@ -320,6 +321,7 @@ Resources:"#,
                     &main,
                     &main,
                     &main,
+                    &parameters.bucket_name,
                     &main,
                     &main,
                     &secondary,
