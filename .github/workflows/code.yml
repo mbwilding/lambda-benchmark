@@ -23,15 +23,20 @@ jobs:
       - name: Build and Upload
         run: |
           file_paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
-          bucket_name=$(sed -n 's/bucket_name: "\(.*\)"/\1/p' parameters.yml)
+
+          parameters_json=$(yq e "parameters.yml" -j)
+
+          bucket_name=$(jq -r '.bucket_name' <<< "$parameters_json")
 
           for file_path in $file_paths
           do
             echo "Processing '$file_path'..."
 
-            architectures=$(yq e "$file_path/manifest.yml" -j | jq -r '.architectures[]')
-            memory_sizes=$(yq e "parameters.yml" -j | jq -r '.memory_sizes[]')
-            path=$(yq e "$file_path/manifest.yml" -j | jq -r '.path')
+            manifest_json=$(yq e "$file_path/manifest.yml" -j)
+
+            architectures=$(jq -r '.architectures[]' <<< "$manifest_json")
+            memory_sizes=$(jq -r '.memory_sizes[]' <<< "$parameters_json")
+            path=$(jq -r '.path' <<< "$manifest_json")
 
             chmod +x "$file_path/build.sh"
 

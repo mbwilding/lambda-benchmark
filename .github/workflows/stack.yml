@@ -8,6 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install yq
+        run: |
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt-get update
+          sudo apt-get install yq -y
       - name: "Configure AWS credentials"
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -29,8 +34,11 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SAM_CLI_TELEMETRY: 0
         run: |
-          stack_name=$(sed -n 's/stack_name: "\(.*\)"/\1/p' parameters.yml)
-          bucket_name=$(sed -n 's/bucket_name: "\(.*\)"/\1/p' parameters.yml)
+          parameters_json=$(yq e "parameters.yml" -j)
+
+          stack_name=$(jq -r '.stack_name' <<< "$parameters_json")
+          bucket_name=$(jq -r '.bucket_name' <<< "$parameters_json")
+
           sam package \
             --template-file template.yml \
             --output-template-file packaged-template.yml \
