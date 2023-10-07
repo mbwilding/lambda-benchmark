@@ -234,7 +234,7 @@ Resources:"#,
       RoleArn: !GetAtt StepFunctionRole.Arn
       Definition:
         Comment: Lambda Benchmark Runner
-        StartAt: Parallel
+        StartAt: Iterations
         States:
           Iterations:
             Type: Task
