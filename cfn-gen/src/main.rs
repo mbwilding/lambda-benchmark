@@ -292,14 +292,13 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
-                                            Payload.$: $
                                           OutputPath: $.Payload
-                                          Next: GetLogEvents
+                                          Next: {}-{}-{}-log
                                         {}-{}-{}-log:
                                           Type: Task
                                           Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
                                           Parameters:
-                                            LogGroupName: "/aws/lambda/lbd-benchmark-{}-{}-{}"
+                                            LogGroupName: /aws/lambda/lbd-benchmark-{}-{}-{}
                                             LogStreamName.$: $
                                             StartFromHead: false
                                             Limit: 1
@@ -330,6 +329,9 @@ Resources:"#,
                     &manifest.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
                     memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
                     &manifest.path,
                     &architecture,
                     &memory,
