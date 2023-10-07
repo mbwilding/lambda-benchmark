@@ -263,16 +263,30 @@ Resources:"#,
             for memory in &parameters.memory_sizes {
                 builder.push_str(&format!(
                     r#"
-                              - StartAt: {}-{}-{}
+                              - StartAt: {}-{}-{}-iter
                                 States:
-                                  {}-{}-{}:
-                                    Type: Task
-                                    Resource: arn:aws:states:::lambda:invoke
-                                    OutputPath: $.Payload
-                                    Parameters:
-                                      Payload.$: $
-                                      FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
+                                  {}-{}-{}-iter:
+                                    Type: Map
+                                    ItemProcessor:
+                                      ProcessorConfig:
+                                        Mode: INLINE
+                                      StartAt: {}-{}-{}
+                                      States:
+                                        {}-{}-{}:
+                                          End: true
+                                          OutputPath: $.Payload
+                                          Parameters:
+                                            FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
+                                            Payload.$: $
+                                          Resource: arn:aws:states:::lambda:invoke
+                                          Type: Task
                                     End: true"#,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
                     &manifest.path,
                     &architecture,
                     &memory,

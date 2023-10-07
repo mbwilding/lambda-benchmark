@@ -13,7 +13,8 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
         .payload
         .as_u64()
         .expect("payload must be a number greater than 0");
-    let numbers: Vec<u64> = (1..=iterations).collect();
+
+    let numbers: Vec<String> = (1..=iterations).map(|n| n.to_string()).collect();
 
     Ok(json!(numbers))
 }
