@@ -25,24 +25,11 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     let input: Input = from_value(event.payload).unwrap();
     let aws_config = aws_config::load_from_env().await;
 
-    // force_cold_start(&input, &aws_config).await?;
+    force_cold_start(&input, &aws_config).await?;
 
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
-    let log = cloudwatch
-        .get_log_events()
-        .log_group_name(format!("/aws/lambda/{}", &input.function_name))
-        .log_stream_name(&input.log_stream)
-        .limit(1)
-        .send()
-        .await?
-        .events
-        .context("no events")?
-        .first()
-        .context("no event")?
-        .message
-        .clone()
-        .context("no message")?;
+    let log = get_latest_log_message(&input, &cloudwatch).await?;
 
     let patterns = [
         ("request_id", r"RequestId: ([\da-f-]+)"),
@@ -70,14 +57,13 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
         }
     }
 
-    for (key, value) in &extracted_data {
-        println!("{}: {}", key, value);
-    }
+    // for (key, value) in &extracted_data {
+    //     println!("{}: {}", key, value);
+    // }
 
     Ok(json!(extracted_data))
 }
 
-#[allow(dead_code)]
 async fn force_cold_start(input: &Input, aws_config: &SdkConfig) -> Result<()> {
     let lambda = aws_sdk_lambda::Client::new(aws_config);
 
@@ -102,4 +88,29 @@ async fn force_cold_start(input: &Input, aws_config: &SdkConfig) -> Result<()> {
         .send()
         .await?;
     Ok(())
+}
+
+async fn get_latest_log_message(
+    input: &Input,
+    cloudwatch: &aws_sdk_cloudwatchlogs::Client,
+) -> Result<String> {
+    let log_events = cloudwatch
+        .filter_log_events()
+        .log_group_name(format!("/aws/lambda/{}", &input.function_name))
+        .set_log_stream_names(Some(vec![input.log_stream.clone()]))
+        .set_filter_pattern(Some("%^REPORT%".to_string()))
+        .send()
+        .await?
+        .events
+        .ok_or_else(|| anyhow::anyhow!("No log events found."))?;
+
+    let latest_event = log_events
+        .into_iter()
+        .max_by_key(|event| event.timestamp)
+        .ok_or_else(|| anyhow::anyhow!("No log events found after filtering."))?;
+
+    latest_event
+        .message
+        .clone()
+        .ok_or_else(|| anyhow::anyhow!("Latest log event has no message."))
 }
