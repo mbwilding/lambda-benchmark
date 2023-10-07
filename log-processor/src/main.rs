@@ -1,7 +1,14 @@
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
-use serde_json::{json, Value};
+use serde::Deserialize;
+use serde_json::{from_value, json, Value};
 use std::collections::HashMap;
+
+#[derive(Debug, Deserialize)]
+struct Log {
+    #[serde(rename = "Message")]
+    message: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -11,28 +18,25 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    let log_data = event
-        .payload
-        .as_str()
-        .ok_or_else(|| Error::from("Failed to convert payload to string"))?;
+    let log: Log = from_value(event.payload).unwrap();
 
     let patterns = [
-        ("RequestId", r"RequestId: ([\da-f-]+)"),
-        ("Duration", r"Duration: ([\d.]+) ms"),
-        ("Billed Duration", r"Billed Duration: (\d+) ms"),
-        ("Memory Size", r"Memory Size: (\d+) MB"),
-        ("Max Memory Used", r"Max Memory Used: (\d+) MB"),
-        ("Init Duration", r"Init Duration: ([\d.]+) ms"),
-        ("XRAY TraceId", r"XRAY TraceId: ([\da-f-]+)"),
-        ("SegmentId", r"SegmentId: ([\da-f]+)"),
-        ("Sampled", r"Sampled: (true|false)"),
+        ("request_id", r"RequestId: ([\da-f-]+)"),
+        ("duration", r"Duration: ([\d.]+) ms"),
+        ("billed_duration", r"Billed Duration: (\d+) ms"),
+        ("memory_size", r"Memory Size: (\d+) MB"),
+        ("max_memory_used", r"Max Memory Used: (\d+) MB"),
+        ("init_duration", r"Init Duration: ([\d.]+) ms"),
+        //("xray_trace_id", r"XRAY TraceId: ([\da-f-]+)"),
+        //("segment_id", r"SegmentId: ([\da-f]+)"),
+        //("sampled", r"Sampled: (true|false)"),
     ];
 
     let mut extracted_data = HashMap::new();
 
     for (field, pattern) in patterns.iter() {
         let re = Regex::new(pattern).unwrap();
-        match re.captures(log_data) {
+        match re.captures(&log.message) {
             Some(captures) => {
                 extracted_data.insert(*field, captures.get(1).map_or("", |m| m.as_str()));
             }

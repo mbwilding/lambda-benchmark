@@ -322,13 +322,13 @@ Resources:"#,
                                             LogStreamName.$: $
                                             StartFromHead: false
                                             Limit: 1
-                                          OutputPath: $.Events[0].Message
+                                          OutputPath: $.Events[0]
                                           Next: {}-log-processor
                                         {}-log-processor:
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
-                                            Payload.$: "\"$\""
+                                            Payload.$: $
                                             FunctionName: !GetAtt LambdaLogProcessor.Arn
                                           OutputPath: $.Payload
                                           End: true
