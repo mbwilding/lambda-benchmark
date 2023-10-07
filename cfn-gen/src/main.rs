@@ -123,7 +123,7 @@ Resources:"#,
         &parameters.bucket_name
     ));
 
-    // Lambda functions
+    // Backing Lambda functions
     builder.push_str(&format!(
         r#"
   LambdaNumToArray:
@@ -140,8 +140,14 @@ Resources:"#,
       CodeUri:
         Bucket: "{}"
         Key: "{}"
+
+  LogGroupNumToArray:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/lbd-benchmark-num-to-array"
+      RetentionInDays: {}
 "#,
-        &parameters.bucket_name, "backing/num-to-array.zip"
+        &parameters.bucket_name, "backing/num-to-array.zip", &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions
