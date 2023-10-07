@@ -17,13 +17,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: Install Rust toolchain
+      - name: "Install Rust toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: Install Zig toolchain
+      - name: "Install Zig toolchain"
         uses: korandoru/setup-zig@v1
         with:
           zig-version: 0.11.0
-      - name: Install Cargo Lambda
+      - name: "Install Cargo Lambda"
         uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
           repo: cargo-lambda/cargo-lambda
@@ -40,6 +40,6 @@ jobs:
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")
-            aws s3 cp "$file" s3://$bucket_name/backing/ > /dev/null 2>&1
+            aws s3 cp "$file" s3://$bucket_name/backing/
             echo "Uploaded '$file' to 's3://$bucket_name/backing/'"
           done
