@@ -275,6 +275,7 @@ Resources:"#,
                                 States:
                                   {}-{}-{}-iter:
                                     Type: Map
+                                    MaxConcurrency: 1
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
