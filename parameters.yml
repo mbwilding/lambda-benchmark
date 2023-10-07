@@ -1,5 +1,6 @@
 stack_name: "cfn-lambda-benchmark"
 bucket_name: "bkt-lambda-benchmark"
+log_retention_in_days: 7
 
 memory_sizes:
   - 128

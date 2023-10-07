@@ -13,6 +13,7 @@ use walkdir::WalkDir;
 struct Parameters {
     bucket_name: String,
     memory_sizes: Vec<u16>,
+    log_retention_in_days: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -106,13 +107,13 @@ Resources:"#);
     for memory in &parameters.memory_sizes {
         for manifest in manifests.iter() {
             for architecture in &manifest.architectures {
-                let lambda_name = format!("{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
+                let lambda_name = format!("LambdaBenchmark{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
                 let function_name = format!("lbd-benchmark-{}-{}-{}", &manifest.path, &architecture.replace("_", "-"), &memory);
                 let description = format!("{} | {} | {}", &manifest.display_name, &architecture, &memory);
                 let key = format!("runtimes/code_{}_{}.zip", &manifest.path, &architecture);
 
                 builder.push_str(&format!(r#"
-  LambdaBenchmark{}:
+  {}:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: "{}"
@@ -130,12 +131,12 @@ Resources:"#);
           Variables:
             BUCKET_NAME: "{}"
 
-  LogGroupLambdaBenchmark{}:
+  LogGroup{}:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/{}"
-      RetentionInDays: 7
-"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key, &parameters.bucket_name, &lambda_name, &function_name));
+      RetentionInDays: {}
+"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key, &parameters.bucket_name, &lambda_name, &function_name, &parameters.log_retention_in_days));
             }
         }
     }
@@ -176,7 +177,7 @@ Resources:"#);
                           {}-{}-para:
                             Type: Parallel
                             Branches:"#, &manifest.path, &architecture, &manifest.path, &architecture));
-            for memory_size in &parameters.memory_sizes {
+            for memory in &parameters.memory_sizes {
                 builder.push_str(&format!(r#"
                               - StartAt: {}-{}-{}
                                 States:
@@ -186,8 +187,8 @@ Resources:"#);
                                     OutputPath: $.Payload
                                     Parameters:
                                       Payload.$: $
-                                      FunctionName: !Sub "arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:lbd-benchmark-{}-{}-{}"
-                                    End: true"#, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture, &memory_size, &manifest.path, &architecture.replace("_", "-"), &memory_size));
+                                      FunctionName: !GetAtt {}.Arn
+                                    End: true"#, &manifest.path, &architecture, &memory, &manifest.path, &architecture, &memory, format!("LambdaBenchmark{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory)));
             }
             builder.push_str(r#"
                             End: true"#);
@@ -204,7 +205,7 @@ Resources:"#);
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-lambda-benchmark-step-functions-role"
+      RoleName: "iam-lambda-benchmark-step-functions-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -254,14 +255,14 @@ Resources:"#);
     }
 
     // State machine log group
-    builder.push_str(r#"
+    builder.push_str(&format!(r#"
 
   LogGroupStateMachine:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/vendedlogs/states/lambda-benchmark
-      RetentionInDays: 7
-"#);
+      RetentionInDays: {}
+"#, &parameters.log_retention_in_days));
 
     Ok(builder)
 }
