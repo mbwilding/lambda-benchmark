@@ -160,7 +160,7 @@ Resources:"#,
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: "lbd-benchmark-log-processor"
-      Description: "Lambda Benchmark | Number to Array"
+      Description: "Lambda Benchmark | Log Processor"
       Runtime: "provided.al2"
       Architectures: ["arm64"]
       Handler: "bootstrap"
