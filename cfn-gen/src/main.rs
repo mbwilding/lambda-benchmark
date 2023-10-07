@@ -345,6 +345,11 @@ Resources:"#,
                                           Parameters:
                                             Payload.$: $
                                             FunctionName: !GetAtt LambdaLogProcessor.Arn
+                                          Retry:
+                                            - BackoffRate: 2
+                                              ErrorEquals: [States.ALL]
+                                              IntervalSeconds: 2
+                                              MaxAttempts: 6
                                           OutputPath: $.Payload
                                           End: true
                                     End: true"#,
