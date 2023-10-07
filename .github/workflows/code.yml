@@ -23,7 +23,7 @@ jobs:
 
           parameters_json=$(yq -o=json '.' parameters.yml)
 
-          bucket_name=$(jq -r ".bucket_name' <<< $parameters_json)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
           for file_path in $file_paths
           do
