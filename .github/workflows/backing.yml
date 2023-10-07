@@ -24,7 +24,7 @@ jobs:
           toolchain: stable
           override: true
       - name: "Install Cargo Lambda"
-        uses: jaxxstorm/action-install-gh-release@latest
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
         with:
           repo: cargo-lambda/cargo-lambda
           platform: linux
@@ -36,8 +36,7 @@ jobs:
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
-          cargo lambda build --bin cfn-gen      --release --target=aarch64-unknown-linux-gnu --output-format zip
-          cargo lambda build --bin num-to-array --release --target=aarch64-unknown-linux-gnu --output-format zip
+          cargo lambda build --release --arm64 --output-format zip
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")
