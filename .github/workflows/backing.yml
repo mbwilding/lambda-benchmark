@@ -28,7 +28,7 @@ jobs:
         with:
           repo: cargo-lambda/cargo-lambda
           platform: linux
-          arch: x86_64
+          arch: aarch64
       - name: "Build backing and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
