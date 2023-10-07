@@ -49,7 +49,7 @@ jobs:
               s3_key="runtimes/${zip}"
 
               if [ -f "$file" ]; then
-                echo "::group::Upload '$file_path'"
+                echo "::group::Upload '$file_path' [$arch]"
                 aws s3 cp "$file" s3://$bucket_name/runtimes/ > /dev/null 2>&1
                 echo "Uploaded '$file' to 's3://$bucket_name/runtimes/'"
           

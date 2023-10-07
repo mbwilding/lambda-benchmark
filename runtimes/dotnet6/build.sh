@@ -8,5 +8,4 @@ rm ${zip} 2> /dev/null
 
 docker build . --build-arg ARCH=${ARCH} -t mbwilding/dotnet6
 dockerId=$(docker create mbwilding/dotnet6)
-path=$(sed -n 's/path: "\(.*\)"/\1/p' parameters.yml)
 docker cp $dockerId:/code.zip ${zip}
