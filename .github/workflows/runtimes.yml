@@ -57,13 +57,13 @@ jobs:
               if [ -f "$file" ]; then
                 echo "::group::Upload '$file_path' [$arch]"
                 aws s3 cp "$file" s3://$bucket_name/runtimes/ > /dev/null 2>&1
-                echo "Uploaded '$file' to 's3://$bucket_name/runtimes/'"
+                echo "Uploaded '$file' to 's3://$bucket_name/$s3_key'"
           
                 for memory_size in $memory_sizes
                 do
                   function_name="lbd-benchmark-${path}-${arch//_/-}-${memory_size}"
                   aws lambda update-function-code --function-name $function_name --s3-bucket $bucket_name --s3-key $s3_key > /dev/null 2>&1
-                  echo "Updated '$function_name' with '$file'"
+                  echo "Updated '$function_name'"
                 done
                 echo "::endgroup::"
               else
