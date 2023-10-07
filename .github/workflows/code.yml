@@ -27,7 +27,7 @@ jobs:
 
           for file_path in $file_paths
           do
-            echo "::group::Processing '$file_path'..."
+            echo "::group::Process '$file_path'"
 
             manifest_json=$(yq -o=json '.' "$file_path/manifest.yml" -j)
 
@@ -39,7 +39,7 @@ jobs:
 
             for arch in $architectures
             do
-              echo "::group::Building '$file_path' [$arch]..."
+              echo "::group::Build '$file_path' [$arch]"
               (cd "$file_path" && ./build.sh "$arch")
               echo "Building '$file_path' [$arch] completed"
               echo "::endgroup::"
@@ -49,6 +49,7 @@ jobs:
               s3_key="runtimes/${zip}"
 
               if [ -f "$file" ]; then
+                echo "::group::Upload '$file_path'"
                 aws s3 cp "$file" s3://$bucket_name/runtimes/ > /dev/null 2>&1
                 echo "Uploaded '$file' to 's3://$bucket_name/runtimes/'"
           
@@ -58,6 +59,7 @@ jobs:
                   aws lambda update-function-code --function-name $function_name --s3-bucket $bucket_name --s3-key $s3_key > /dev/null 2>&1
                   echo "Updated '$function_name' with '$file'"
                 done
+                echo "::endgroup::"
               else
                 echo "File '$file' does not exist. Skipping upload."
               fi
