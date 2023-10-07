@@ -25,7 +25,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     let input: Input = from_value(event.payload).unwrap();
     let aws_config = aws_config::load_from_env().await;
 
-    force_cold_start(&input, &aws_config).await?;
+    // force_cold_start(&input, &aws_config).await?;
 
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
