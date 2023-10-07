@@ -17,15 +17,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: "Install Rust toolchain"
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
       - name: "Generate template"
         run: |
-          cargo run --bin cfn-gen
+          parameters_json=$(yq -o=json '.' parameters.yml)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
+
+          zip="num-to-array.zip"
+          aws s3 cp s3://$bucket_name/backing/$zip .
+          unzip $zip -d .
+          chmod +x cfn-gen
+          ./cfn-gen
       - name: "SAM Deploy"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}

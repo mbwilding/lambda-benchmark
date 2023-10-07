@@ -141,7 +141,7 @@ Resources:"#,
         Bucket: "{}"
         Key: "{}"
 "#,
-        &parameters.bucket_name, "backing/num_to_array.zip"
+        &parameters.bucket_name, "backing/num-to-array.zip"
     ));
 
     // Runtime Lambda functions
