@@ -22,9 +22,7 @@ jobs:
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
-          zip="cfn-gen.zip"
-          aws s3 cp s3://$bucket_name/backing/$zip .
-          unzip $zip -d .
+          aws s3 cp s3://$bucket_name/tools/cfn-gen .
           chmod +x cfn-gen
           ./cfn-gen
       - name: "SAM Deploy"

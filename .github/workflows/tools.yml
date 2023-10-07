@@ -1,0 +1,28 @@
+name: Tools
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Setup yq"
+        uses: dcarbone/install-yq-action@v1.1.1
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: "Install Rust toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Build tools and upload"
+        run: |
+          parameters_json=$(yq -o=json '.' parameters.yml)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
+          
+          cargo build --release --bin cfn-gen
+          aws s3 cp target/release/cfn-gen s3://$bucket_name/tools/
