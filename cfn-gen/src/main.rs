@@ -1,12 +1,12 @@
 extern crate serde;
 extern crate serde_yaml;
 
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -47,9 +47,7 @@ fn load_manifests() -> Result<Vec<Manifest>> {
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_file() && e.file_name() == "manifest.yml")
-        .filter_map(|e| {
-            load_manifest(e.path()).ok()
-        })
+        .filter_map(|e| load_manifest(e.path()).ok())
         .collect();
 
     Ok(manifests)
@@ -62,19 +60,22 @@ fn load_manifest(path: &Path) -> Result<Manifest> {
     Ok(manifest)
 }
 
-fn build_cloudformation(parameters: &Parameters, manifests: &Vec<Manifest>) -> Result<String> {
+fn build_cloudformation(parameters: &Parameters, manifests: &[Manifest]) -> Result<String> {
     let mut builder = String::new();
 
     // Setup the template
-    builder.push_str(r#"---
+    builder.push_str(
+        r#"---
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: "Lambda Benchmark"
 
-Resources:"#);
+Resources:"#,
+    );
 
     // IAM Roles
-    builder.push_str(&format!(r#"
+    builder.push_str(&format!(
+        r#"
   RoleRuntime:
     Type: AWS::IAM::Role
     Properties:
@@ -101,18 +102,34 @@ Resources:"#);
                   - s3:DeleteObject
                 Resource: "arn:aws:s3:::{}/test/*"
       Path: /
-"#, &parameters.bucket_name));
+"#,
+        &parameters.bucket_name
+    ));
 
     // Lambda functions
     for memory in &parameters.memory_sizes {
         for manifest in manifests.iter() {
             for architecture in &manifest.architectures {
-                let lambda_name = format!("LambdaBenchmark{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory);
-                let function_name = format!("lbd-benchmark-{}-{}-{}", &manifest.path, &architecture.replace("_", "-"), &memory);
-                let description = format!("{} | {} | {}", &manifest.display_name, &architecture, &memory);
+                let lambda_name = format!(
+                    "LambdaBenchmark{}{}{}",
+                    &manifest.display_name.replace(['-', '_'], ""),
+                    &architecture.replace('_', "").to_uppercase(),
+                    memory
+                );
+                let function_name = format!(
+                    "lbd-benchmark-{}-{}-{}",
+                    &manifest.path,
+                    &architecture.replace('_', "-"),
+                    &memory
+                );
+                let description = format!(
+                    "{} | {} | {}",
+                    &manifest.display_name, &architecture, &memory
+                );
                 let key = format!("runtimes/code_{}_{}.zip", &manifest.path, &architecture);
 
-                builder.push_str(&format!(r#"
+                builder.push_str(&format!(
+                    r#"
   {}:
     Type: AWS::Serverless::Function
     Properties:
@@ -136,13 +153,28 @@ Resources:"#);
     Properties:
       LogGroupName: "/aws/lambda/{}"
       RetentionInDays: {}
-"#, lambda_name, function_name, description, &manifest.runtime, architecture, &manifest.handler, memory, &parameters.bucket_name, &key, &parameters.bucket_name, &lambda_name, &function_name, &parameters.log_retention_in_days));
+"#,
+                    lambda_name,
+                    function_name,
+                    description,
+                    &manifest.runtime,
+                    architecture,
+                    &manifest.handler,
+                    memory,
+                    &parameters.bucket_name,
+                    &key,
+                    &parameters.bucket_name,
+                    &lambda_name,
+                    &function_name,
+                    &parameters.log_retention_in_days
+                ));
             }
         }
     }
 
     // State machine
-    builder.push_str(&format!(r#"
+    builder.push_str(
+        r#"
   StateMachineBenchmarkRunner:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -162,23 +194,31 @@ Resources:"#);
         States:
           Parallel:
             Type: Parallel
-            Branches:"#));
+            Branches:"#,
+    );
     for manifest in manifests.iter() {
-        builder.push_str(&format!(r#"
+        builder.push_str(&format!(
+            r#"
               - StartAt: {}-para
                 States:
                   {}-para:
                     Type: Parallel
-                    Branches:"#, &manifest.path, &manifest.path));
+                    Branches:"#,
+            &manifest.path, &manifest.path
+        ));
         for architecture in &manifest.architectures {
-            builder.push_str(&format!(r#"
+            builder.push_str(&format!(
+                r#"
                       - StartAt: {}-{}-para
                         States:
                           {}-{}-para:
                             Type: Parallel
-                            Branches:"#, &manifest.path, &architecture, &manifest.path, &architecture));
+                            Branches:"#,
+                &manifest.path, &architecture, &manifest.path, &architecture
+            ));
             for memory in &parameters.memory_sizes {
-                builder.push_str(&format!(r#"
+                builder.push_str(&format!(
+                    r#"
                               - StartAt: {}-{}-{}
                                 States:
                                   {}-{}-{}:
@@ -187,18 +227,34 @@ Resources:"#);
                                     OutputPath: $.Payload
                                     Parameters:
                                       Payload.$: $
-                                      FunctionName: !GetAtt {}.Arn
-                                    End: true"#, &manifest.path, &architecture, &memory, &manifest.path, &architecture, &memory, format!("LambdaBenchmark{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), memory)));
+                                      FunctionName: !GetAtt LambdaBenchmark{}{}{}.Arn
+                                    End: true"#,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.display_name.replace(['-', '_'], ""),
+                    &architecture.replace('_', "").to_uppercase(),
+                    memory
+                ));
             }
-            builder.push_str(r#"
-                            End: true"#);
+            builder.push_str(
+                r#"
+                            End: true"#,
+            );
         }
-        builder.push_str(r#"
-                    End: true"#);
+        builder.push_str(
+            r#"
+                    End: true"#,
+        );
     }
-    builder.push_str(r#"
+    builder.push_str(
+        r#"
             End: true
-"#);
+"#,
+    );
 
     // State machine role
     builder.push_str(r#"
@@ -248,21 +304,29 @@ Resources:"#);
     for manifest in manifests.iter() {
         for architecture in &manifest.architectures {
             for memory_size in &parameters.memory_sizes {
-                builder.push_str(&format!(r#"
-                  - !GetAtt LambdaBenchmark{}.Arn"#, format!("{}{}{}", &manifest.display_name.replace("-", "").replace("_", ""), &architecture.replace("_", "").to_uppercase(), &memory_size)));
+                builder.push_str(&format!(
+                    r#"
+                  - !GetAtt LambdaBenchmark{}{}{}.Arn"#,
+                    &manifest.display_name.replace(['-', '_'], ""),
+                    &architecture.replace('_', "").to_uppercase(),
+                    &memory_size
+                ));
             }
         }
     }
 
     // State machine log group
-    builder.push_str(&format!(r#"
+    builder.push_str(&format!(
+        r#"
 
   LogGroupStateMachine:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/vendedlogs/states/lambda-benchmark
       RetentionInDays: {}
-"#, &parameters.log_retention_in_days));
+"#,
+        &parameters.log_retention_in_days
+    ));
 
     Ok(builder)
 }
