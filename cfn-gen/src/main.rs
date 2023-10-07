@@ -276,7 +276,7 @@ Resources:"#,
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-{}-{}
+                                      StartAt: {}-{}-{}-force-cold
                                       States:
                                         {}-{}-{}-force-cold:
                                           Type: Task
