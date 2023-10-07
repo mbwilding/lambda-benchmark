@@ -237,12 +237,9 @@ Resources:"#,
         StartAt: Iterations
         States:
           Iterations:
-            Type: Task
-            Resource: arn:aws:states:::lambda:invoke
-            OutputPath: $.Payload
+            Type: Pass
             Parameters:
-              Payload.$: $
-              FunctionName: !GetAtt LambdaNumToArray.Arn
+              iterations.$: States.ArrayRange(1, $.iterations, 1)
             Next: Parallel
           Parallel:
             Type: Parallel
@@ -281,6 +278,15 @@ Resources:"#,
                                         Mode: INLINE
                                       StartAt: {}-{}-{}
                                       States:
+                                        {}-{}-{}-force-cold:
+                                          Type: Task
+                                          Parameters:
+                                            FunctionName: lbd-benchmark-{}-{}-{}
+                                            Environment:
+                                              Variables:
+                                                COLD_START.$: States.UUID()
+                                          Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionConfiguration
+                                          Next: {}-{}-{}
                                         {}-{}-{}:
                                           Type: Task
                                           Resource: arn:aws:states:::lambda:invoke
@@ -305,6 +311,15 @@ Resources:"#,
                     &memory,
                     &manifest.path,
                     &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture,
+                    &memory,
+                    &manifest.path,
+                    &architecture.replace('_', "-"),
                     &memory,
                     &manifest.path,
                     &architecture,
@@ -383,7 +398,9 @@ Resources:"#,
           PolicyDocument:
             Statement:
               - Effect: Allow
-                Action: lambda:InvokeFunction
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:UpdateFunctionConfiguration
                 Resource:
                   - !GetAtt LambdaNumToArray.Arn"#);
     for manifest in manifests.iter() {
