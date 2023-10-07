@@ -17,14 +17,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
+      - name: "Install Rust toolchain"
+        uses: dtolnay/rust-toolchain@stable
       - name: "Generate template"
-        run: |
-          parameters_json=$(yq -o=json '.' parameters.yml)
-          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
-
-          aws s3 cp s3://$bucket_name/tools/cfn-gen .
-          chmod +x cfn-gen
-          ./cfn-gen
+        run: cargo run --bin cfn-gen
       - name: "SAM Deploy"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
