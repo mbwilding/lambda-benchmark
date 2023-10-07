@@ -22,29 +22,19 @@ async fn main() -> Result<(), Error> {
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     let input: Input = from_value(event.payload).unwrap();
-    println!("input: {:#?}", input);
 
     let aws_config = aws_config::load_from_env().await;
 
     let lambda = aws_sdk_lambda::Client::new(&aws_config);
 
-    let get_func_config = lambda
+    let env_vars = lambda
         .get_function_configuration()
         .function_name(&input.function_name)
         .send()
-        .await?;
-
-    println!(
-        "collected func config: {:?}",
-        &get_func_config.function_name
-    );
-
-    let env_vars = get_func_config
+        .await?
         .environment
         .context("no environment")?
         .variables;
-
-    println!("env_vars: {:#?}", env_vars);
 
     let new_env_vars = Environment::builder()
         .set_variables(env_vars)
@@ -74,8 +64,6 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
         .message
         .clone()
         .context("no message")?;
-
-    println!("log: {:#?}", input);
 
     let patterns = [
         ("request_id", r"RequestId: ([\da-f-]+)"),

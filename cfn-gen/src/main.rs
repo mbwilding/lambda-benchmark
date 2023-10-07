@@ -103,6 +103,7 @@ Resources:"#,
                 Resource: "*"
               - Effect: Allow
                 Action:
+                  - lambda:GetFunctionConfiguration
                   - lambda:UpdateFunctionConfiguration
                 Resource:"#,
     );
