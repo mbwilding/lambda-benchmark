@@ -17,39 +17,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: "Install Rust toolchain"
-        run: |
-          rustup toolchain install stable; \
-          rustup target install x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; \
-          rustup component add rustfmt clippy; \
-          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin;
-      - name: "Install Zig"
-        run: |
-          zigVersion=$(curl -s https://github.com/ziglang/zig/releases | grep -oP 'href="/ziglang/zig/releases/tag/\K([0-9]+\.[0-9]+\.[0-9]+)' | head -n 1); \
-          dpkgArch="$(dpkg --print-architecture)"; \
-          case "${dpkgArch##*-}" in \
-          amd64) zigArch='x86_64';; \
-          arm64) zigArch='aarch64';; \
-          esac; \
-          url="https://ziglang.org/download/${zigVersion}/zig-linux-${zigArch}-${zigVersion}.tar.xz"; \
-          wget "$url"; \
-          tar xf "zig-linux-${zigArch}-${zigVersion}.tar.xz"; \
-          mv zig-linux-${zigArch}-${zigVersion} zig; \
-          rm "zig-linux-${zigArch}-${zigVersion}.tar.xz";
-      - name: "Install Cargo Lambda"
-        run: |
-          cargoLambdaVersion=$(curl -s https://github.com/cargo-lambda/cargo-lambda/releases | grep -oP 'href="/cargo-lambda/cargo-lambda/releases/tag/\K(v[0-9]+\.[0-9]+\.[0-9]+)' | head -n 1); \
-          mkdir cargo-lambda; \
-          cd cargo-lambda; \
-          dpkgArch="$(dpkg --print-architecture)"; \
-          case "${dpkgArch##*-}" in \
-          amd64) lambdaArch='x86_64-unknown-linux-musl';; \
-          arm64) lambdaArch='aarch64-unknown-linux-musl';; \
-          esac; \
-          url="https://github.com/cargo-lambda/cargo-lambda/releases/download/${cargoLambdaVersion}/cargo-lambda-${cargoLambdaVersion}.${lambdaArch}.tar.gz"; \
-          wget "$url"; \
-          tar xf "cargo-lambda-${cargoLambdaVersion}.${lambdaArch}.tar.gz"; \
-          rm "cargo-lambda-${cargoLambdaVersion}.${lambdaArch}.tar.gz";
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Zig toolchain
+        uses: korandoru/setup-zig@v1
+      - name: Install Cargo Lambda
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: cargo-lambda/cargo-lambda
+          platform: linux
+          arch: x86_64
       - name: "Build backing and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
