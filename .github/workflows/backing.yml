@@ -41,7 +41,8 @@ jobs:
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")
             $s3_key="backing/${name}.zip"
-            aws s3 cp "$src" "$key" > /dev/null 2>&1
+            dst="s3://$bucket_name/$s3_key"
+            aws s3 cp "$src" "$dst" > /dev/null 2>&1
             echo "Uploaded '$src' to 's3://$bucket_name/$s3_key'"
 
             function_name="lbd-benchmark-$name"
