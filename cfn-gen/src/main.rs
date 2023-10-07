@@ -282,6 +282,7 @@ Resources:"#,
                                 States:
                                   {}-iter:
                                     Type: Map
+                                    ItemsPath: $.iterations
                                     MaxConcurrency: 1
                                     ItemProcessor:
                                       ProcessorConfig:
