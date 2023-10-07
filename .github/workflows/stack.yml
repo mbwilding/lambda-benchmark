@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chrisdickinson/setup-yq@latest
+      - name: "Setup yq"
+        uses: dcarbone/install-yq-action@v1.1.1
       - name: "Configure AWS credentials"
         uses: aws-actions/configure-aws-credentials@v4
         with:

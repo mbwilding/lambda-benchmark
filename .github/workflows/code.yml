@@ -8,21 +8,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chrisdickinson/setup-yq@latest
-      - name: Configure AWS credentials
+      - name: "Setup yq"
+        uses: dcarbone/install-yq-action@v1.1.1
+      - name: "Configure AWS credentials"
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
-      - name: Build and Upload
+      - name: "Build and Upload"
         run: |
           file_paths=$(find runtimes -type f -name build.sh -exec dirname {} \;)
 
           parameters_json=$(yq e "parameters.yml" -j)
 
-          bucket_name=$(jq -r '.bucket_name' <<< "$parameters_json")
+          bucket_name=$(jq -r ".bucket_name' <<< "$parameters_json")
 
           for file_path in $file_paths
           do
