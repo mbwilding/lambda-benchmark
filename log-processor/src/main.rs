@@ -28,20 +28,26 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
 
     let lambda = aws_sdk_lambda::Client::new(&aws_config);
 
-    let env_vars = lambda
+    let get_func_config = lambda
         .get_function_configuration()
         .function_name(&input.function_name)
         .send()
-        .await?
+        .await?;
+
+    println!(
+        "collected func config: {:?}",
+        &get_func_config.function_name
+    );
+
+    let env_vars = get_func_config
         .environment
         .context("no environment")?
-        .variables
-        .context("no variables")?
-        .clone();
+        .variables;
 
     println!("env_vars: {:#?}", env_vars);
 
     let new_env_vars = Environment::builder()
+        .set_variables(env_vars)
         .variables("COLD_START".to_string(), Uuid::new_v4().to_string())
         .build();
 

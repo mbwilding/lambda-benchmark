@@ -99,6 +99,10 @@ Resources:"#,
             Statement:
               - Effect: Allow
                 Action:
+                  - logs:GetLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - lambda:UpdateFunctionConfiguration
                 Resource:"#,
     );
