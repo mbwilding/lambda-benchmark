@@ -34,5 +34,5 @@ async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
         .send()
         .await?;
 
-    Ok(format!("\"{}\"", event.context.env_config.log_stream))
+    Ok(event.context.env_config.log_stream)
 }

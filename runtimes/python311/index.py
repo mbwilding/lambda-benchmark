@@ -17,4 +17,4 @@ def handler(event, context):
     except Exception as e:
         raise Exception(f"An error occurred: {str(e)}")
 
-    return '"{}"'.format(context.log_stream_name)
+    return context.log_stream_name

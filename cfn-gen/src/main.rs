@@ -306,6 +306,12 @@ Resources:"#,
                     memory
                 )
                 .replace(['-', '_'], "");
+                let function_name = format!(
+                    "lbd-benchmark-{}-{}-{}",
+                    &manifest.path,
+                    &architecture.replace('_', "-"),
+                    &memory
+                );
                 builder.push_str(&format!(
                     r#"
                               - StartAt: {}-iter
@@ -324,7 +330,9 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                          OutputPath: $.Payload
+                                          ResultSelector:
+                                            function_name: {}
+                                            log_stream.$: $.Payload
                                           Next: {}-log-processor
                                         {}-log-processor:
                                           Type: Task
@@ -335,7 +343,7 @@ Resources:"#,
                                           OutputPath: $.Payload
                                           End: true
                                     End: true"#,
-                    &main, &main, &main, &main, &secondary, &main, &main
+                    &main, &main, &main, &main, &secondary, &function_name, &main, &main
                 ));
             }
             builder.push_str(

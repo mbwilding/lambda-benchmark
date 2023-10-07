@@ -6,8 +6,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 struct Log {
-    #[serde(rename = "Message")]
-    message: String,
+    function_name: String,
+    log_stream: String,
 }
 
 #[tokio::main]
@@ -19,6 +19,20 @@ async fn main() -> Result<(), Error> {
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let log: Log = from_value(event.payload).unwrap();
+    println!("log: {:#?}", log);
+
+    let aws_config = aws_config::load_from_env().await;
+
+    let lambda = aws_sdk_lambda::Client::new(&aws_config)
+        .get_function_configuration()
+        .function_name(&event.context.env_config.function_name)
+        .send()
+        .await?;
+
+    println!("lambda: {:#?}", lambda);
+
+    // TODO: get log stream from log group
+    let log = "";
 
     let patterns = [
         ("request_id", r"RequestId: ([\da-f-]+)"),
@@ -36,7 +50,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 
     for (field, pattern) in patterns.iter() {
         let re = Regex::new(pattern).unwrap();
-        match re.captures(&log.message) {
+        match re.captures(log) {
             Some(captures) => {
                 extracted_data.insert(*field, captures.get(1).map_or("", |m| m.as_str()));
             }
