@@ -38,6 +38,6 @@ public class Function
             Key = bucketKey
         });
 
-        return context.LogStreamName;
+        return $"\"{context.LogStreamName}\"";
     }
 }
