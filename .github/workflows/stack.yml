@@ -22,7 +22,7 @@ jobs:
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
-          zip="num-to-array.zip"
+          zip="cfn-gen.zip"
           aws s3 cp s3://$bucket_name/backing/$zip .
           unzip $zip -d .
           chmod +x cfn-gen
