@@ -40,6 +40,6 @@ jobs:
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")
-            aws s3 cp "$src" s3://$bucket_name/backing/ > /dev/null 2>&1
-            echo "Uploaded '$file' to 's3://$bucket_name/backing/'"
+            aws s3 cp "$src" s3://$bucket_name/backing/ ${name}.zip > /dev/null 2>&1
+            echo "Uploaded '$file' to 's3://$bucket_name/backing/${name}.zip'"
           done
