@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use aws_config::SdkConfig;
 use aws_sdk_lambda::types::Environment;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
@@ -22,31 +23,9 @@ async fn main() -> Result<(), Error> {
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     let input: Input = from_value(event.payload).unwrap();
-
     let aws_config = aws_config::load_from_env().await;
 
-    let lambda = aws_sdk_lambda::Client::new(&aws_config);
-
-    let env_vars = lambda
-        .get_function_configuration()
-        .function_name(&input.function_name)
-        .send()
-        .await?
-        .environment
-        .context("no environment")?
-        .variables;
-
-    let new_env_vars = Environment::builder()
-        .set_variables(env_vars)
-        .variables("COLD_START".to_string(), Uuid::new_v4().to_string())
-        .build();
-
-    lambda
-        .update_function_configuration()
-        .function_name(&input.function_name)
-        .environment(new_env_vars)
-        .send()
-        .await?;
+    // force_cold_start(&input, &aws_config).await?;
 
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
@@ -96,4 +75,30 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     }
 
     Ok(json!(extracted_data))
+}
+
+async fn force_cold_start(input: &Input, aws_config: &SdkConfig) -> Result<()> {
+    let lambda = aws_sdk_lambda::Client::new(&aws_config);
+
+    let env_vars = lambda
+        .get_function_configuration()
+        .function_name(&input.function_name)
+        .send()
+        .await?
+        .environment
+        .context("no environment")?
+        .variables;
+
+    let new_env_vars = Environment::builder()
+        .set_variables(env_vars)
+        .variables("COLD_START".to_string(), Uuid::new_v4().to_string())
+        .build();
+
+    lambda
+        .update_function_configuration()
+        .function_name(&input.function_name)
+        .environment(new_env_vars)
+        .send()
+        .await?;
+    Ok(())
 }
