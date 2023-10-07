@@ -30,7 +30,7 @@ jobs:
 
           for file_path in $file_paths
           do
-            echo "Processing '$file_path'..."
+            echo "::group::Processing '$file_path'..."
 
             manifest_json=$(yq e "$file_path/manifest.yml" -j)
 
@@ -42,9 +42,10 @@ jobs:
 
             for arch in $architectures
             do
-              echo "Building '$file_path' [$arch]..."
+              echo "::group::Building '$file_path' [$arch]..."
               (cd "$file_path" && ./build.sh "$arch")
               echo "Building '$file_path' [$arch] completed"
+              echo "::endgroup::"
 
               zip="code_${path}_${arch}.zip"
               file="${file_path}/${zip}"
@@ -64,4 +65,5 @@ jobs:
                 echo "File '$file' does not exist. Skipping upload."
               fi
             done
+            echo "::endgroup::"
           done
