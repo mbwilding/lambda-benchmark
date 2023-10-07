@@ -36,6 +36,11 @@ jobs:
           stack_name=$(jq -r '.stack_name' <<< $parameters_json)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
+          if ! aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
+            aws s3api create-bucket --bucket $bucket_name --region $AWS_REGION \
+            --create-bucket-configuration LocationConstraint=$AWS_REGION
+          fi
+
           sam package \
             --template-file template.yml \
             --output-template-file packaged-template.yml \
