@@ -31,12 +31,7 @@ jobs:
           arch: aarch64
       - name: "Install Zig"
         run: |
-          sudo apt install gnupg2
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 379CE192D401AB61
-          echo "deb https://dl.bintray.com/dryzig/zig-ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/zig.list
-          sudo apt update
-          sudo apt install zig
-          zig version
+          snap install zig --classic --beta
       - name: "Build backing and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
