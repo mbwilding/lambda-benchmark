@@ -259,8 +259,8 @@ Resources:"#,
             End: true
             Resource: arn:aws:states:::lambda:invoke
             Parameters:
-              Payload.$: $.runs
               FunctionName: !GetAtt LambdaLogProcessor.Arn
+              Payload.$: $
             Retry:
               - ErrorEquals: [States.ALL]
                 IntervalSeconds: 2
@@ -272,6 +272,7 @@ Resources:"#,
             Next: Log Processor
             ResultSelector:
               runs.$: $.[*][*][*][*]
+            OutputPath: $.runs
             Branches:"#,
     );
     for manifest in manifests.iter() {
