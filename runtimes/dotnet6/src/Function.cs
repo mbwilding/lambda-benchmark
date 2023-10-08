@@ -19,7 +19,7 @@ public class Function
 
         var s3 = new AmazonS3Client();
 
-        for (var i = 0; i < 250; i++)
+        for (var i = 0; i < 100; i++)
         {
             var request = new PutObjectRequest
             {

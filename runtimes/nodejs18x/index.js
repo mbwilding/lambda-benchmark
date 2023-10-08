@@ -5,7 +5,7 @@ exports.handler = async (event, context) => {
     const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
     const s3 = new S3Client({ region: process.env.AWS_REGION });
 
-    for (let i = 0; i < 250; i++) {
+    for (let i = 0; i < 100; i++) {
         const params = {
             Bucket: bucket_name,
             Key: bucket_key,

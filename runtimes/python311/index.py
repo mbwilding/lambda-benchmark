@@ -9,7 +9,7 @@ def handler(event, context):
     s3 = boto3.client('s3')
 
     try:
-        for i in range(250):
+        for i in range(100):
             s3.put_object(Bucket=bucket_name, Key=bucket_key, ContentType='text/plain', Body=str(i))
 
         s3.delete_object(Bucket=bucket_name, Key=bucket_key)
