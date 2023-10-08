@@ -100,30 +100,8 @@ Resources:"#,
               - Effect: Allow
                 Action:
                   - logs:GetLogEvents
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - lambda:GetFunctionConfiguration
-                  - lambda:UpdateFunctionConfiguration
-                Resource:"#,
+                Resource: "*""#,
     );
-    for manifest in manifests.iter() {
-        for architecture in &manifest.architectures {
-            for memory in &parameters.memory_sizes {
-                let function_name = format!(
-                    "{}{}{}",
-                    &manifest.display_name.replace(['-', '_'], ""),
-                    &architecture.replace('_', "").to_uppercase(),
-                    &memory
-                );
-                builder.push_str(&format!(
-                    r#"
-                  - !GetAtt LambdaBenchmark{}.Arn"#,
-                    &function_name
-                ));
-            }
-        }
-    }
 
     builder.push_str(&format!(
         r#"
@@ -273,11 +251,27 @@ Resources:"#,
         States:
           Iterations:
             Type: Pass
+            Next: Parallel
             Parameters:
               iterations.$: States.ArrayRange(1, $.iterations, 1)
-            Next: Parallel
+          Log Processor:
+            Type: Task
+            End: true
+            Resource: arn:aws:states:::lambda:invoke
+            Parameters:
+              Payload.$: $
+              FunctionName: !GetAtt LambdaLogProcessor.Arn
+            Retry:
+              - ErrorEquals: [States.ALL]
+                IntervalSeconds: 2
+                BackoffRate: 2
+                MaxAttempts: 6
+            OutputPath: $.Payload
           Parallel:
             Type: Parallel
+            Next: Log Processor
+            ResultSelector:
+              log_streams.$: $.[*][*][*][*]
             Branches:"#,
     );
     for manifest in manifests.iter() {
@@ -287,6 +281,7 @@ Resources:"#,
                 States:
                   {}-para:
                     Type: Parallel
+                    End: true
                     Branches:"#,
             &manifest.path, &manifest.path
         ));
@@ -299,6 +294,7 @@ Resources:"#,
                         States:
                           {}-para:
                             Type: Parallel
+                            End: true
                             Branches:"#,
                 &main, &main
             ));
@@ -323,6 +319,7 @@ Resources:"#,
                                 States:
                                   {}-iter:
                                     Type: Map
+                                    End: true
                                     ItemsPath: $.iterations
                                     MaxConcurrency: 1
                                     ItemProcessor:
@@ -332,48 +329,25 @@ Resources:"#,
                                       States:
                                         {}-runtime:
                                           Type: Task
+                                          End: true
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                            Payload:
+                                              iteration.$: $
                                           ResultSelector:
+                                            iteration.$: $$
                                             function_name: {}
-                                            log_stream.$: $.Payload
-                                          Next: {}-log-processor
-                                        {}-log-processor:
-                                          Type: Task
-                                          Resource: arn:aws:states:::lambda:invoke
-                                          Parameters:
-                                            Payload.$: $
-                                            FunctionName: !GetAtt LambdaLogProcessor.Arn
-                                          Retry:
-                                            - BackoffRate: 2
-                                              ErrorEquals: [States.ALL]
-                                              IntervalSeconds: 2
-                                              MaxAttempts: 6
-                                          OutputPath: $.Payload
-                                          End: true
-                                    End: true"#,
-                    &main, &main, &main, &main, &secondary, &function_name, &main, &main
+                                            log_stream.$: $.Payload"#,
+                    &main, &main, &main, &main, &secondary, &function_name
                 ));
             }
-            builder.push_str(
-                r#"
-                            End: true"#,
-            );
         }
-        builder.push_str(
-            r#"
-                    End: true"#,
-        );
     }
-    builder.push_str(
-        r#"
-            End: true
-"#,
-    );
 
     // State machine role
     builder.push_str(r#"
+
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:

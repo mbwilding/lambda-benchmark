@@ -170,30 +170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-sdk-lambda"
-version = "0.33.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fc10d009e457f11b72602e691d7b4d450de01e9ad2e3319eedafcb19a215335"
-dependencies = [
- "aws-credential-types",
- "aws-http",
- "aws-runtime",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-json",
- "aws-smithy-runtime",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "http",
- "regex",
- "tokio-stream",
- "tracing",
-]
-
-[[package]]
 name = "aws-sdk-sso"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -963,7 +939,6 @@ dependencies = [
  "anyhow",
  "aws-config",
  "aws-sdk-cloudwatchlogs",
- "aws-sdk-lambda",
  "lambda_runtime",
  "regex",
  "serde",
