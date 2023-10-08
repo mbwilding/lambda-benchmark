@@ -6,11 +6,6 @@ use serde_json::{from_value, Value};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
-struct Runs {
-    runs: Vec<Run>,
-}
-
-#[derive(Debug, Deserialize)]
 struct Run {
     function_name: String,
     log_stream: String,
@@ -30,7 +25,7 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<()> {
-    let runs: Runs = from_value(event.payload).expect("Failed to parse event payload");
+    let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
     let aws_config = aws_config::load_from_env().await;
 
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
@@ -57,7 +52,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
 
     let mut metrics = Vec::new();
 
-    for run in runs.runs {
+    for run in runs {
         let log_events = cloudwatch
             .filter_log_events()
             .set_log_group_name(Some(format!("/aws/lambda/{}", &run.function_name)))

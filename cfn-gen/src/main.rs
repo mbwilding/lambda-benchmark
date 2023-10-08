@@ -259,7 +259,7 @@ Resources:"#,
             End: true
             Resource: arn:aws:states:::lambda:invoke
             Parameters:
-              Payload.$: $
+              Payload.$: $.runs
               FunctionName: !GetAtt LambdaLogProcessor.Arn
             Retry:
               - ErrorEquals: [States.ALL]
@@ -333,7 +333,6 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                            Payload.$: $
                                           ResultSelector:
                                             function_name: {}
                                             log_stream.$: $.Payload"#,
