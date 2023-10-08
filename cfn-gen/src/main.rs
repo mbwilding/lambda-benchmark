@@ -331,9 +331,9 @@ Resources:"#,
                                           Type: Task
                                           End: true
                                           Resource: arn:aws:states:::lambda:invoke
-                                          Payload.$: $
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                            Payload.$: $
                                           ResultSelector:
                                             function_name: {}
                                             log_stream.$: $.Payload"#,
