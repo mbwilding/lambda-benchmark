@@ -74,12 +74,12 @@ Resources:"#,
     );
 
     // IAM Roles
-    builder.push_str(
+    builder.push_str(&format!(
         r#"
   RoleBacking:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-backing-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-backing-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -93,15 +93,20 @@ Resources:"#,
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: !Sub "iam-${AWS::Region}-lambda-benchmark-backing-policy"
+        - PolicyName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-backing-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - logs:FilterLogEvents
+                  - s3:PutObject
+                Resource: "arn:aws:s3:::{}/metrics/*"
+              - Effect: Allow
+                Action:
+                  - s3:FilterLogEvents
                 Resource: "*""#,
-    );
+        &parameters.bucket_name
+    ));
 
     builder.push_str(&format!(
         r#"
@@ -153,6 +158,9 @@ Resources:"#,
       CodeUri:
         Bucket: "{}"
         Key: "{}"
+      Environment:
+        Variables:
+          BUCKET_NAME: "{}"
 
   LogGroupLogProcessor:
     Type: AWS::Logs::LogGroup
@@ -160,7 +168,10 @@ Resources:"#,
       LogGroupName: "/aws/lambda/lbd-benchmark-log-processor"
       RetentionInDays: {}
 "#,
-        &parameters.bucket_name, "backing/log-processor.zip", &parameters.log_retention_in_days
+        &parameters.bucket_name,
+        "backing/log-processor.zip",
+        &parameters.bucket_name,
+        &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions

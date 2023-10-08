@@ -1,4 +1,7 @@
 use anyhow::Result;
+use aws_smithy_http::byte_stream::ByteStream;
+use bytes::Bytes;
+use chrono::Utc;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -24,7 +27,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<Value> {
+async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
     let aws_config = aws_config::load_from_env().await;
 
@@ -92,7 +95,24 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value> {
         metrics.push(current);
     }
 
-    println!("{:#?}", metrics);
+    let s3 = aws_sdk_s3::Client::new(&aws_config);
 
-    Ok(json!(metrics))
+    let bucket = std::env::var("BUCKET_NAME")?;
+
+    let now = Utc::now();
+    let formatted_date = now.format("%Y-%m-%d").to_string();
+    let key = format!("metrics/{}.json", formatted_date);
+
+    let body = json!(metrics).to_string();
+
+    let _ = s3
+        .put_object()
+        .bucket(bucket)
+        .key(key)
+        .content_type("text/plain")
+        .body(ByteStream::from(Bytes::from(body)))
+        .send()
+        .await;
+
+    Ok(())
 }
