@@ -34,13 +34,8 @@ jobs:
           bucket_status=$(aws s3api head-bucket --bucket $bucket_name --region $AWS_REGION 2>&1) || true
 
           if echo $bucket_status | grep -q 'Not Found'; then
-            echo "Bucket '$bucket_name' does not exist. Creating..."
-            aws s3api create-bucket \
-              --bucket $bucket_name \
-              --region $AWS_REGION \
-              --create-bucket-configuration LocationConstraint=$AWS_REGION
-          else
-            echo "Bucket $bucket_name exists"
+            echo "Please deploy out 'backing' and 'runtimes' first"
+            exit 1
           fi
 
           sam package \
