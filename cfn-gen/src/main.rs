@@ -149,7 +149,7 @@ Resources:"#,
       Handler: "bootstrap"
       Role: !GetAtt RoleBacking.Arn
       MemorySize: 128
-      Timeout: 5
+      Timeout: 60
       CodeUri:
         Bucket: "{}"
         Key: "{}"
