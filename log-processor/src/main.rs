@@ -7,14 +7,12 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 struct Run {
-    iteration: u8,
     function_name: String,
     log_stream: String,
 }
 
 #[derive(Debug)]
 struct Collection {
-    iteration: u8,
     function_name: String,
     metrics: HashMap<String, String>,
 }
@@ -87,7 +85,6 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
         });
 
         let current = Collection {
-            iteration: run.iteration,
             function_name: run.function_name.clone(),
             metrics: extracted_data,
         };

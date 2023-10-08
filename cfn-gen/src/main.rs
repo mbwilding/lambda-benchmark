@@ -321,6 +321,7 @@ Resources:"#,
                                     Type: Map
                                     End: true
                                     ItemsPath: $.iterations
+                                    ResultPath: $.results
                                     MaxConcurrency: 1
                                     ItemProcessor:
                                       ProcessorConfig:
@@ -333,10 +334,7 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                            Payload:
-                                              iteration.$: $
                                           ResultSelector:
-                                            iteration.$: $
                                             function_name: {}
                                             log_stream.$: $.Payload"#,
                     &main, &main, &main, &main, &secondary, &function_name
