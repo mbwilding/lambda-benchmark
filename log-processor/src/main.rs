@@ -6,7 +6,7 @@ use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, json, Value};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
@@ -19,6 +19,18 @@ struct Run {
 struct Collection {
     function_name: String,
     metrics: HashMap<String, String>,
+}
+
+fn remove_matching_log_streams(runs: Vec<Run>) -> Vec<Run> {
+    let mut seen = HashSet::new();
+    runs.into_iter()
+        .filter(|run| {
+            !seen.contains(&(run.function_name.clone(), run.log_stream.clone())) && {
+                seen.insert((run.function_name.clone(), run.log_stream.clone()));
+                true
+            }
+        })
+        .collect()
 }
 
 #[tokio::main]
@@ -40,6 +52,8 @@ async fn main() -> Result<(), Error> {
 
 async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
+    let runs = remove_matching_log_streams(runs);
+
     let aws_config = aws_config::load_from_env().await;
 
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);

@@ -297,6 +297,9 @@ Resources:"#,
           Parallel:
             Type: Parallel
             Next: Log Processor
+            ResultSelector:
+              runs.$: $.[*][*][*][*]
+            OutputPath: $.runs
             Branches:"#,
         &step_functions_resource,
         &parameters.step_functions.to_lowercase(),
