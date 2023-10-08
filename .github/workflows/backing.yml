@@ -30,9 +30,23 @@ jobs:
           platform: linux
           arch: x86_64
       - name: "Build backing and upload"
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
+          
+          bucket_status=$(aws s3api head-bucket --bucket $bucket_name --region $AWS_REGION 2>&1) || true
+
+          if echo $bucket_status | grep -q 'Not Found'; then
+            echo "Bucket '$bucket_name' does not exist. Creating..."
+            aws s3api create-bucket \
+              --bucket $bucket_name \
+              --region $AWS_REGION \
+              --create-bucket-configuration LocationConstraint=$AWS_REGION
+          else
+            echo "Bucket $bucket_name exists"
+          fi
           
           cargo lambda build --release --bin log-processor --arm64 --output-format zip
 

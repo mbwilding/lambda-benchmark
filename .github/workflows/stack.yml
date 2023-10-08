@@ -31,6 +31,18 @@ jobs:
           stack_name=$(jq -r '.stack_name' <<< $parameters_json)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
 
+          bucket_status=$(aws s3api head-bucket --bucket $bucket_name --region $AWS_REGION 2>&1) || true
+
+          if echo $bucket_status | grep -q 'Not Found'; then
+            echo "Bucket '$bucket_name' does not exist. Creating..."
+            aws s3api create-bucket \
+              --bucket $bucket_name \
+              --region $AWS_REGION \
+              --create-bucket-configuration LocationConstraint=$AWS_REGION
+          else
+            echo "Bucket $bucket_name exists"
+          fi
+
           sam package \
             --template-file template.yml \
             --output-template-file packaged-template.yml \
