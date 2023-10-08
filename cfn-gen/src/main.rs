@@ -360,7 +360,7 @@ Resources:"#,
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "iam-lambda-benchmark-step-functions-role"
+      RoleName: "iam-${AWS::Region}-lambda-benchmark-step-functions-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:

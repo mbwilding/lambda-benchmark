@@ -7,6 +7,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, json, Value};
 use std::collections::HashMap;
+use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
 struct Run {
@@ -22,8 +23,18 @@ struct Collection {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let func = service_fn(func);
-    lambda_runtime::run(func).await?;
+    tracing_subscriber::fmt()
+        .json()
+        .with_max_level(tracing::Level::INFO)
+        .with_span_events(FmtSpan::CLOSE)
+        .with_current_span(true)
+        .with_span_list(false)
+        .with_target(true)
+        .with_line_number(true)
+        .without_time()
+        .init();
+
+    lambda_runtime::run(service_fn(func)).await?;
     Ok(())
 }
 
@@ -109,7 +120,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
         .put_object()
         .bucket(bucket)
         .key(key)
-        .content_type("text/plain")
+        .content_type("application/json")
         .body(ByteStream::from(Bytes::from(body)))
         .send()
         .await;

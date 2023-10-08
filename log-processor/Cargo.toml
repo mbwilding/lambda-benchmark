@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 lambda_runtime = "0.8"
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
