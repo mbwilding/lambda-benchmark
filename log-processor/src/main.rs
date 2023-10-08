@@ -5,7 +5,7 @@ use chrono::Utc;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::{from_value, json, Value};
+use serde_json::{from_value, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use tracing_subscriber::fmt::format::FmtSpan;
 
@@ -132,7 +132,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let formatted_date = now.format("%Y-%m-%d").to_string();
     let key = format!("metrics/{}.json", formatted_date);
 
-    let body = json!(metrics).to_string();
+    let body = serde_json::to_string_pretty(&metrics)?;
 
     let _ = s3
         .put_object()

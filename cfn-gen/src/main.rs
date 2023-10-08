@@ -247,7 +247,7 @@ Resources:"#,
         &parameters
             .step_functions
             .chars()
-            .nth(0)
+            .next()
             .unwrap()
             .to_uppercase(),
         &parameters
