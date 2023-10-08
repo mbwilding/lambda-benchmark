@@ -147,7 +147,7 @@ Resources:"#,
   LambdaLogProcessor:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: "lbd-benchmark-log-processor"
+      FunctionName: "benchmark-log-processor"
       Description: "Lambda Benchmark | Log Processor"
       Runtime: "provided.al2"
       Architectures: ["arm64"]
@@ -162,10 +162,10 @@ Resources:"#,
         Variables:
           BUCKET_NAME: "{}"
 
-  LogGroupLogProcessor:
+  LogsLogProcessor:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: "/aws/lambda/lbd-benchmark-log-processor"
+      LogGroupName: "/aws/lambda/benchmark-log-processor"
       RetentionInDays: {}
 "#,
         &parameters.bucket_name,
@@ -185,7 +185,7 @@ Resources:"#,
                     memory
                 );
                 let function_name = format!(
-                    "lbd-benchmark-{}-{}-{}",
+                    "benchmark-{}-{}-{}",
                     &manifest.path,
                     &architecture.replace('_', "-"),
                     &memory
@@ -216,7 +216,7 @@ Resources:"#,
           Variables:
             BUCKET_NAME: "{}"
 
-  LogGroup{}:
+  Logs{}:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/{}"
@@ -254,7 +254,7 @@ Resources:"#,
         Level: ERROR
         Destinations:
           - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt LogGroupStateMachine.Arn
+              LogGroupArn: !GetAtt LogsStateMachine.Arn
       RoleArn: !GetAtt StepFunctionRole.Arn
       Definition:
         Comment: Lambda Benchmark Runner
@@ -320,7 +320,7 @@ Resources:"#,
                 )
                 .replace(['-', '_'], "");
                 let function_name = format!(
-                    "lbd-benchmark-{}-{}-{}",
+                    "benchmark-{}-{}-{}",
                     &manifest.path,
                     &architecture.replace('_', "-"),
                     &memory
@@ -424,7 +424,7 @@ Resources:"#,
     builder.push_str(&format!(
         r#"
 
-  LogGroupStateMachine:
+  LogsStateMachine:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/vendedlogs/states/lambda-benchmark

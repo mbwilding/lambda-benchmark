@@ -61,7 +61,7 @@ jobs:
           
                 for memory_size in $memory_sizes
                 do
-                  function_name="lbd-benchmark-${path}-${arch//_/-}-${memory_size}"
+                  function_name="benchmark-${path}-${arch//_/-}-${memory_size}"
                   aws lambda update-function-code --function-name $function_name --s3-bucket $bucket_name --s3-key $s3_key > /dev/null 2>&1 || true
                 done
                 echo "::endgroup::"
