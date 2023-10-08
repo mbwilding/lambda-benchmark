@@ -272,6 +272,7 @@ Resources:"#,
             Next: Log Processor
             ResultSelector:
               runs.$: $.[*][*][*][*]
+            OutputPath: $.Payload
             Branches:"#,
     );
     for manifest in manifests.iter() {
