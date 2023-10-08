@@ -247,11 +247,11 @@ Resources:"#,
     Type: AWS::StepFunctions::StateMachine
     Properties:
       StateMachineName: !Sub "stm-lambda-benchmark"
-      StateMachineType: STANDARD
+      StateMachineType: EXPRESS
       TracingConfiguration:
-        Enabled: true
+        Enabled: false
       LoggingConfiguration:
-        Level: ALL
+        Level: ERROR
         Destinations:
           - CloudWatchLogsLogGroup:
               LogGroupArn: !GetAtt LogGroupStateMachine.Arn
