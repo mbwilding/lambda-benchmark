@@ -271,7 +271,7 @@ Resources:"#,
             Type: Parallel
             Next: Log Processor
             ResultSelector:
-              log_streams.$: $.[*][*][*][*]
+              runs.$: $.[*][*][*][*]
             Branches:"#,
     );
     for manifest in manifests.iter() {
