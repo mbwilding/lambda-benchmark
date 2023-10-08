@@ -336,7 +336,7 @@ Resources:"#,
                                             Payload:
                                               iteration.$: $
                                           ResultSelector:
-                                            iteration.$: $$
+                                            iteration.$: $
                                             function_name: {}
                                             log_stream.$: $.Payload"#,
                     &main, &main, &main, &main, &secondary, &function_name
