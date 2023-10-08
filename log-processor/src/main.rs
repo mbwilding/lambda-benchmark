@@ -1,8 +1,8 @@
 use anyhow::Result;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
-use serde::Deserialize;
-use serde_json::{from_value, Value};
+use serde::{Deserialize, Serialize};
+use serde_json::{from_value, json, Value};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
@@ -11,7 +11,7 @@ struct Run {
     log_stream: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Collection {
     function_name: String,
     metrics: HashMap<String, String>,
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<()> {
+async fn func(event: LambdaEvent<Value>) -> Result<Value> {
     let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
     let aws_config = aws_config::load_from_env().await;
 
@@ -94,5 +94,5 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
 
     println!("{:#?}", metrics);
 
-    Ok(())
+    Ok(json!(metrics))
 }
