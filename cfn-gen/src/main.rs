@@ -272,7 +272,6 @@ Resources:"#,
             Next: Log Processor
             ResultSelector:
               runs.$: $.[*][*][*][*]
-            OutputPath: $.Payload
             Branches:"#,
     );
     for manifest in manifests.iter() {
@@ -332,6 +331,7 @@ Resources:"#,
                                           Type: Task
                                           End: true
                                           Resource: arn:aws:states:::lambda:invoke
+                                          Payload.$: $
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                           ResultSelector:
