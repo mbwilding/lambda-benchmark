@@ -6,7 +6,7 @@ use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, json, Value};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
@@ -45,7 +45,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
     let patterns: Vec<(&str, Regex)> = vec![
-        ("request_id", Regex::new(r"RequestId: ([\da-f-]+)").unwrap()),
+        //("request_id", Regex::new(r"RequestId: ([\da-f-]+)").unwrap()),
         ("duration", Regex::new(r"Duration: ([\d.]+) ms").unwrap()),
         // ("billed_duration", Regex::new(r"Billed Duration: (\d+) ms").unwrap(), ),
         ("memory_size", Regex::new(r"Memory Size: (\d+) MB").unwrap()),
@@ -64,13 +64,22 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
     .into_iter()
     .collect();
 
-    let mut metrics = Vec::new();
+    let mut grouped_runs: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
     for run in runs {
+        grouped_runs
+            .entry(run.function_name)
+            .or_insert_with(Vec::new)
+            .push(run.log_stream);
+    }
+
+    let mut metrics = Vec::new();
+
+    for (function_name, log_streams) in grouped_runs.iter() {
         let log_events = cloudwatch
             .filter_log_events()
-            .set_log_group_name(Some(format!("/aws/lambda/{}", &run.function_name)))
-            .set_log_stream_names(Some(vec![run.log_stream]))
+            .set_log_group_name(Some(format!("/aws/lambda/{}", function_name)))
+            .set_log_stream_names(Some(log_streams.clone()))
             .set_filter_pattern(Some("%^REPORT%".to_string()))
             .send()
             .await?
@@ -99,7 +108,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
         });
 
         let current = Collection {
-            function_name: run.function_name.clone(),
+            function_name: function_name.clone(),
             metrics: extracted_data,
         };
 

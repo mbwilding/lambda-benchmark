@@ -14,6 +14,8 @@ struct Parameters {
     bucket_name: String,
     memory_sizes: Vec<u16>,
     log_retention_in_days: u16,
+    step_functions: String,
+    step_functions_debug: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -241,13 +243,28 @@ Resources:"#,
     }
 
     // State machine
-    builder.push_str(
+    let step_functions_resource = format!(
+        "{}{}",
+        &parameters
+            .step_functions
+            .chars()
+            .nth(0)
+            .unwrap()
+            .to_uppercase(),
+        &parameters
+            .step_functions
+            .chars()
+            .skip(1)
+            .collect::<String>()
+            .to_lowercase()
+    );
+    builder.push_str(&format!(
         r#"
-  StateMachineBenchmarkRunner:
+  StateMachineBenchmarkRunner{}:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub "stm-lambda-benchmark"
-      StateMachineType: EXPRESS
+      StateMachineName: !Sub "stm-lambda-benchmark-{}"
+      StateMachineType: {}
       TracingConfiguration:
         Enabled: false
       LoggingConfiguration:
@@ -281,11 +298,11 @@ Resources:"#,
           Parallel:
             Type: Parallel
             Next: Log Processor
-            ResultSelector:
-              runs.$: $.[*][*][*][*]
-            OutputPath: $.runs
             Branches:"#,
-    );
+        &step_functions_resource,
+        &parameters.step_functions.to_lowercase(),
+        &parameters.step_functions.to_uppercase()
+    ));
     for manifest in manifests.iter() {
         builder.push_str(&format!(
             r#"
@@ -350,7 +367,16 @@ Resources:"#,
                                             log_stream.$: $.Payload"#,
                     &main, &main, &main, &main, &secondary, &function_name
                 ));
+                if parameters.step_functions_debug {
+                    break;
+                }
             }
+            if parameters.step_functions_debug {
+                break;
+            }
+        }
+        if parameters.step_functions_debug {
+            break;
         }
     }
 
@@ -406,6 +432,7 @@ Resources:"#,
                 Action:
                   - lambda:InvokeFunction
                 Resource:"#);
+
     for manifest in manifests.iter() {
         for architecture in &manifest.architectures {
             for memory in &parameters.memory_sizes {
