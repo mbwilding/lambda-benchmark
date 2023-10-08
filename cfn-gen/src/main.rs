@@ -15,7 +15,6 @@ struct Parameters {
     memory_sizes: Vec<u16>,
     log_retention_in_days: u16,
     step_functions: String,
-    step_functions_debug: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -62,7 +61,7 @@ fn load_manifest(path: &Path) -> Result<Manifest> {
     Ok(manifest)
 }
 
-fn build_cloudformation(parameters: &Parameters, manifests: &[Manifest]) -> Result<String> {
+fn build_cloudformation(parameters: &Parameters, runtimes: &[Manifest]) -> Result<String> {
     let mut builder = String::new();
 
     // Setup the template
@@ -178,7 +177,7 @@ Resources:"#,
 
     // Runtime Lambda functions
     for memory in &parameters.memory_sizes {
-        for manifest in manifests.iter() {
+        for manifest in runtimes.iter() {
             for architecture in &manifest.architectures {
                 let lambda_name = format!(
                     "LambdaBenchmark{}{}{}",
@@ -303,7 +302,7 @@ Resources:"#,
         &parameters.step_functions.to_lowercase(),
         &parameters.step_functions.to_uppercase()
     ));
-    for manifest in manifests.iter() {
+    for runtime in runtimes.iter() {
         builder.push_str(&format!(
             r#"
               - StartAt: {}-para
@@ -312,11 +311,11 @@ Resources:"#,
                     Type: Parallel
                     End: true
                     Branches:"#,
-            &manifest.path, &manifest.path
+            &runtime.path, &runtime.path
         ));
-        for architecture in &manifest.architectures {
+        for architecture in &runtime.architectures {
             let architecture = architecture.replace('_', "-");
-            let main = format!("{}-{}", &manifest.path, &architecture);
+            let main = format!("{}-{}", &runtime.path, &architecture);
             builder.push_str(&format!(
                 r#"
                       - StartAt: {}-para
@@ -328,17 +327,17 @@ Resources:"#,
                 &main, &main
             ));
             for memory in &parameters.memory_sizes {
-                let main = format!("{}-{}-{}", &manifest.path, &architecture, memory);
+                let main = format!("{}-{}-{}", &runtime.path, &architecture, memory);
                 let secondary = format!(
                     "{}{}{}",
-                    &manifest.display_name,
+                    &runtime.display_name,
                     &architecture.replace('_', "").to_uppercase(),
                     memory
                 )
                 .replace(['-', '_'], "");
                 let function_name = format!(
                     "benchmark-{}-{}-{}",
-                    &manifest.path,
+                    &runtime.path,
                     &architecture.replace('_', "-"),
                     &memory
                 );
@@ -367,16 +366,7 @@ Resources:"#,
                                             log_stream.$: $.Payload"#,
                     &main, &main, &main, &main, &secondary, &function_name
                 ));
-                if parameters.step_functions_debug {
-                    break;
-                }
             }
-            if parameters.step_functions_debug {
-                break;
-            }
-        }
-        if parameters.step_functions_debug {
-            break;
         }
     }
 
@@ -433,13 +423,13 @@ Resources:"#,
                   - lambda:InvokeFunction
                 Resource:"#);
 
-    for manifest in manifests.iter() {
-        for architecture in &manifest.architectures {
+    for runtime in runtimes.iter() {
+        for architecture in &runtime.architectures {
             for memory in &parameters.memory_sizes {
                 builder.push_str(&format!(
                     r#"
                   - !GetAtt LambdaBenchmark{}{}{}.Arn"#,
-                    &manifest.display_name.replace(['-', '_'], ""),
+                    &runtime.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
                     &memory
                 ));
