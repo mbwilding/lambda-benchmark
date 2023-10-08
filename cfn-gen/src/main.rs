@@ -79,7 +79,7 @@ Resources:"#,
   RoleBacking:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-lambda-benchmark-backing-${AWS::Region}-role"
+      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-backing-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -93,13 +93,13 @@ Resources:"#,
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: !Sub "iam-lambda-benchmark-backing-${AWS::Region}-policy"
+        - PolicyName: !Sub "iam-${AWS::Region}-lambda-benchmark-backing-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - logs:GetLogEvents
+                  - logs:FilterLogEvents
                 Resource: "*""#,
     );
 
@@ -109,7 +109,7 @@ Resources:"#,
   RoleRuntime:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-lambda-benchmark-runtime-${{AWS::Region}}-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-runtime-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -122,7 +122,7 @@ Resources:"#,
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: !Sub "iam-lambda-benchmark-runtime-${{AWS::Region}}-policy"
+        - PolicyName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-runtime-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -235,7 +235,7 @@ Resources:"#,
   StateMachineBenchmarkRunner:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub "ste-lambda-benchmark"
+      StateMachineName: !Sub "stm-lambda-benchmark"
       StateMachineType: STANDARD
       TracingConfiguration:
         Enabled: true

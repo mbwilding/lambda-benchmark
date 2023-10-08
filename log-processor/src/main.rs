@@ -25,8 +25,6 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<()> {
-    println!("{}", &event.payload.to_string());
-
     let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
     let aws_config = aws_config::load_from_env().await;
 
