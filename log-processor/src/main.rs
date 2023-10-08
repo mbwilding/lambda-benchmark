@@ -24,12 +24,7 @@ struct Collection {
 fn remove_matching_log_streams(runs: Vec<Run>) -> Vec<Run> {
     let mut seen = HashSet::new();
     runs.into_iter()
-        .filter(|run| {
-            !seen.contains(&(run.function_name.clone(), run.log_stream.clone())) && {
-                seen.insert((run.function_name.clone(), run.log_stream.clone()));
-                true
-            }
-        })
+        .filter(|run| seen.insert((run.function_name.clone(), run.log_stream.clone())))
         .collect()
 }
 
