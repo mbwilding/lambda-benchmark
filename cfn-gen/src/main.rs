@@ -103,7 +103,7 @@ Resources:"#,
                 Resource: "arn:aws:s3:::{}/metrics/*"
               - Effect: Allow
                 Action:
-                  - s3:FilterLogEvents
+                  - logs:FilterLogEvents
                 Resource: "*""#,
         &parameters.bucket_name
     ));
@@ -360,7 +360,7 @@ Resources:"#,
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "iam-${AWS::Region}-lambda-benchmark-step-functions-role"
+      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-step-functions-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
