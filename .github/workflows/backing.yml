@@ -45,5 +45,13 @@ jobs:
             echo "Uploaded '$src' to 's3://$bucket_name/$s3_key'"
 
             function_name="benchmark-$name"
-            aws lambda update-function-code --function-name $function_name --s3-bucket $bucket_name --s3-key $s3_key > /dev/null 2>&1 || true
+            function_exists=$(aws lambda get-function --function-name $function_name 2>/dev/null)
+
+            if [ "$?" -eq 0 ]; then
+              # If it exists, update the function
+              aws lambda update-function-code --function-name $function_name --s3-bucket $bucket_name --s3-key $s3_key > /dev/null 2>&1 || true
+              echo "Function '$function_name' exists. Updated function code."
+            else
+              echo "Function '$function_name' does not exist. Skipping update."
+            fi
           done
