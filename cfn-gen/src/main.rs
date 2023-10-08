@@ -321,7 +321,6 @@ Resources:"#,
                                     Type: Map
                                     End: true
                                     ItemsPath: $.iterations
-                                    ResultPath: $.results
                                     MaxConcurrency: 1
                                     ItemProcessor:
                                       ProcessorConfig:
