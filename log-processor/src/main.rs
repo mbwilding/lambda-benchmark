@@ -54,7 +54,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let cloudwatch = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
     let patterns: Vec<(&str, Regex)> = vec![
-        //("request_id", Regex::new(r"RequestId: ([\da-f-]+)").unwrap()),
+        // ("request_id", Regex::new(r"RequestId: ([\da-f-]+)").unwrap()),
         ("duration", Regex::new(r"Duration: ([\d.]+) ms").unwrap()),
         // ("billed_duration", Regex::new(r"Billed Duration: (\d+) ms").unwrap(), ),
         ("memory_size", Regex::new(r"Memory Size: (\d+) MB").unwrap()),
@@ -66,9 +66,9 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
             "init_duration",
             Regex::new(r"Init Duration: ([\d.]+) ms").unwrap(),
         ),
-        //("xray_trace_id", Regex::new(r"XRAY TraceId: ([\da-f-]+)").unwrap()),
-        //("segment_id", Regex::new(r"SegmentId: ([\da-f]+)").unwrap()),
-        //("sampled", Regex::new(r"Sampled: (true|false)").unwrap()),
+        // ("xray_trace_id", Regex::new(r"XRAY TraceId: ([\da-f-]+)").unwrap()),
+        // ("segment_id", Regex::new(r"SegmentId: ([\da-f]+)").unwrap()),
+        // ("sampled", Regex::new(r"Sampled: (true|false)").unwrap()),
     ]
     .into_iter()
     .collect();
