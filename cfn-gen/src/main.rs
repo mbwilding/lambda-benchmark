@@ -120,7 +120,7 @@ Resources:"#,
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-backing-policy"
+        - PolicyName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-report-generator-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:

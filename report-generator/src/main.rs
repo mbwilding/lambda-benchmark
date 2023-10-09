@@ -87,12 +87,25 @@ async fn list_all_objects(
 }
 
 async fn fetch_runs(s3: &Client, bucket_name: &str, objects: &Vec<Object>) -> Result<Vec<Run>> {
-    let mut runs = Vec::new();
+    let mut handles = Vec::new();
+
     for object in objects {
-        let obj_key = object.key().unwrap();
-        let run = fetch_run(s3, bucket_name, obj_key).await?;
-        runs.push(run);
+        let object_key = object.key().unwrap().to_string();
+        let s3 = s3.clone();
+        let bucket_name = bucket_name.to_string();
+
+        let handle = tokio::spawn(async move { fetch_run(&s3, &bucket_name, &object_key).await });
+
+        handles.push(handle);
     }
+
+    let mut runs = Vec::new();
+
+    for handle in handles {
+        let run_result = handle.await?;
+        runs.push(run_result?);
+    }
+
     Ok(runs)
 }
 
