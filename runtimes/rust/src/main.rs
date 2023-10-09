@@ -18,7 +18,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
     let aws_config = aws_config::load_from_env().await;
     let s3 = aws_sdk_s3::Client::new(&aws_config);
 
-    for i in 0..100 {
+    for i in 0..iterations {
         let _ = s3
             .put_object()
             .bucket(&bucket_name)
