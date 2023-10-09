@@ -9,12 +9,6 @@ struct Log {
     log: String,
 }
 
-#[derive(Debug, Serialize)]
-struct Collection {
-    function_name: String,
-    metrics: HashMap<String, String>,
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     lambda_runtime::run(service_fn(func)).await?;
@@ -25,12 +19,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let log: Log = from_value(event.payload).expect("Failed to parse event payload");
     let extracted_data = extract_data(&log.log);
 
-    let collected = Collection {
-        function_name: "test".to_string(),
-        metrics: extracted_data,
-    };
-
-    Ok(json!(collected))
+    Ok(json!(extracted_data))
 }
 
 fn extract_data(log: &str) -> HashMap<String, String> {

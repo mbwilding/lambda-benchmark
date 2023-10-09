@@ -357,7 +357,8 @@ Resources:"#,
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                             S3Bucket: {}
-                                            S3Key: {}"#,
+                                            S3Key: {}
+                                            ResultPath: null"#,
                     &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
                 ));
                 builder.push_str(&format!(
@@ -368,8 +369,7 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                          ResultSelector: {{}}
-                                          OutputPath: $.Payload"#,
+                                          ResultPath: $.Output"#,
                     &runtime_arch_mem, &runtime_arch_mem, &resource_name
                 ));
                 builder.push_str(&format!(
@@ -392,20 +392,34 @@ Resources:"#,
                                             StartFromHead: false
                                             Limit: 1
                                           ResultSelector:
-                                            log.$: $.Events[0].Message"#,
+                                            log.$: $.Events[0].Message
+                                          ResultPath: $.Output"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 builder.push_str(&format!(
                     r#"
                                         {}-log-processor:
                                           Type: Task
-                                          End: true
+                                          Next: {}-upload
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaLogProcessor.Arn
                                             Payload.$: $
-                                          OutputPath: $.Payload"#,
-                    &runtime_arch_mem
+                                          InputPath: $.Output
+                                          ResultPath: $.Output"#,
+                    &runtime_arch_mem, &runtime_arch_mem
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-upload:
+                                          Type: Task
+                                          End: true
+                                          Resource: arn:aws:states:::aws-sdk:s3:putObject
+                                          Parameters:
+                                            Body.$: $.Output.Payload
+                                            Bucket: bkt-lambda-benchmark
+                                            Key.$: States.Format('results/{}_{{}}', $.iteration)"#,
+                    &runtime_arch_mem, &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
                     break;
@@ -474,10 +488,14 @@ Resources:"#,
                 Resource:
                   - arn:aws:s3:::{}/runtimes/*
               - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - arn:aws:s3:::{}/results/*
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                   - lambda:UpdateFunctionCode
-                Resource:"#, &parameters.bucket_name));
+                Resource:"#, &parameters.bucket_name, &parameters.bucket_name));
 
     for runtime in runtimes.iter() {
         for architecture in &runtime.architectures {
