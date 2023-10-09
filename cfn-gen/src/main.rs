@@ -343,7 +343,11 @@ Resources:"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 // Step function nodes
-                let bucket_key = format!("runtimes/code_{}_{}.zip", &runtime.path, &architecture);
+                let bucket_key = format!(
+                    "runtimes/code_{}_{}.zip",
+                    &runtime.path,
+                    &architecture.replace('-', "_")
+                );
                 builder.push_str(&format!(
                     r#"
                                         {}-cold-start:
