@@ -357,8 +357,7 @@ Resources:"#,
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                             S3Bucket: {}
-                                            S3Key: {}
-                                          OutputPath: $.Payload"#,
+                                            S3Key: {}"#,
                     &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
                 ));
                 builder.push_str(&format!(
@@ -369,6 +368,7 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                          ResultSelector: {{}}
                                           OutputPath: $.Payload"#,
                     &runtime_arch_mem, &runtime_arch_mem, &resource_name
                 ));
@@ -377,7 +377,7 @@ Resources:"#,
                                         {}-wait:
                                           Type: Wait
                                           Next: {}-log-extractor
-                                          Seconds: 5"#,
+                                          Seconds: 10"#,
                     &runtime_arch_mem, &runtime_arch_mem
                 ));
                 builder.push_str(&format!(
@@ -392,7 +392,7 @@ Resources:"#,
                                             StartFromHead: false
                                             Limit: 1
                                           ResultSelector:
-                                            log: $.Events[0].Message"#,
+                                            log.$: $.Events[0].Message"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 builder.push_str(&format!(
