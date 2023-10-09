@@ -2,8 +2,8 @@ stack_name: "cfn-lambda-benchmark"
 bucket_name: "bkt-lambda-benchmark"
 log_retention_in_days: 7
 
-step_functions: standard # 'express' or 'standard'
-step_functions_debug: true
+step_functions: express # 'express' or 'standard'
+step_functions_debug: false
 
 memory_sizes:
   - 128
