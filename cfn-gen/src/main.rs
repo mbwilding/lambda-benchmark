@@ -282,22 +282,9 @@ Resources:"#,
             Next: Parallel
             Parameters:
               iterations.$: States.ArrayRange(1, $.iterations, 1)
-          Log Processor:
-            Type: Task
-            End: true
-            Resource: arn:aws:states:::lambda:invoke
-            Parameters:
-              FunctionName: !GetAtt LambdaLogProcessor.Arn
-              Payload.$: $
-            Retry:
-              - ErrorEquals: [States.ALL]
-                IntervalSeconds: 2
-                BackoffRate: 2
-                MaxAttempts: 6
-            OutputPath: $.Payload
           Parallel:
             Type: Parallel
-            Next: Log Processor
+            End: true
             ResultSelector:
               runs.$: $.[*][*][*][*]
             OutputPath: $.runs
@@ -365,9 +352,7 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                          ResultSelector:
-                                            function_name: {}
-                                            log_stream.$: $.Payload
+                                          OutputPath: $.Payload
                                         {}-log:
                                           Type: Task
                                           End: true
@@ -378,7 +363,7 @@ Resources:"#,
                                             StartFromHead: false
                                             Limit: 1
                                           OutputPath: $.Events[0].Message"#,
-                    &main, &main, &main, &main, &main, &secondary, &function_name, &main, &main
+                    &main, &main, &main, &main, &main, &secondary, &main, &main
                 ));
                 if parameters.step_functions_debug {
                     break;
