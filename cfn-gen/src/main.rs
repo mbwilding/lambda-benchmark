@@ -380,7 +380,7 @@ Resources:"#,
                                         {}-wait:
                                           Type: Wait
                                           Next: {}-log-extractor
-                                          Seconds: 10"#,
+                                          Seconds: 15"#,
                     &runtime_arch_mem, &runtime_arch_mem
                 ));
                 builder.push_str(&format!(
@@ -428,8 +428,9 @@ Resources:"#,
                                             Body.$: $.Output.Payload
                                             Bucket: bkt-lambda-benchmark
                                             Key.$: States.Format('results/{}-{{}}.json', $.iteration)
-                                          ResultPath: null"#,
-                    &runtime_arch_mem, &runtime_arch_mem
+                                          ResultSelector:
+                                            Key.$: States.Format('results/{}-{{}}.json', $.iteration)"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
                     break;
