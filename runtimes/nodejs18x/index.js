@@ -1,11 +1,12 @@
 exports.handler = async (event, context) => {
+    const iterations = parseInt(process.env.ITERATIONS_CODE, 10);
     const bucket_name = process.env.BUCKET_NAME;
     const bucket_key = `test/${context.functionName}/test.txt`;
 
     const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
     const s3 = new S3Client({ region: process.env.AWS_REGION });
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < iterations; i++) {
         const params = {
             Bucket: bucket_name,
             Key: bucket_key,

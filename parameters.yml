@@ -1,8 +1,12 @@
 stack_name: "cfn-lambda-benchmark"
 bucket_name: "bkt-lambda-benchmark"
 log_retention_in_days: 7
+iterations_lambdas: 5
+iterations_code: 50
+schedule_state: ENABLED # 'ENABLED' or 'DISABLED'
+schedule_expression: "cron(0 14 * * ? *)"
 
-step_functions: express # 'express' or 'standard'
+step_functions: EXPRESS # 'EXPRESS' or 'STANDARD'
 step_functions_debug: false
 
 memory_sizes:

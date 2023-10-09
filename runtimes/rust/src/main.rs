@@ -11,6 +11,7 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
+    let iterations = std::env::var("ITERATIONS_CODE")?.parse::<i32>()?;
     let bucket_name = std::env::var("BUCKET_NAME")?;
     let bucket_key = format!("test/{}/test.txt", event.context.env_config.function_name);
 

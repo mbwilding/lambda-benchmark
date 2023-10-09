@@ -14,6 +14,10 @@ struct Parameters {
     bucket_name: String,
     memory_sizes: Vec<u16>,
     log_retention_in_days: u16,
+    iterations_lambdas: u8,
+    iterations_code: u16,
+    schedule_state: String,
+    schedule_expression: String,
     step_functions: String,
     step_functions_debug: bool,
 }
@@ -217,6 +221,7 @@ Resources:"#,
       Environment:
           Variables:
             BUCKET_NAME: "{}"
+            ITERATIONS_CODE: "{}"
 
   Logs{}:
     Type: AWS::Logs::LogGroup
@@ -234,6 +239,7 @@ Resources:"#,
                     &parameters.bucket_name,
                     &key,
                     &parameters.bucket_name,
+                    &parameters.iterations_code,
                     &lambda_name,
                     &function_name,
                     &parameters.log_retention_in_days
@@ -273,6 +279,13 @@ Resources:"#,
           - CloudWatchLogsLogGroup:
               LogGroupArn: !GetAtt LogsStateMachine.Arn
       Role: !GetAtt StepFunctionRole.Arn
+      Events:
+        Event:
+          Type: Schedule
+          Properties:
+            State: "{}"
+            Schedule: "{}"
+            Input: '{{"iterations": {}}}'
       Definition:
         Comment: Lambda Benchmark Runner
         StartAt: Iterations
@@ -291,7 +304,10 @@ Resources:"#,
             Branches:"#,
         &step_functions_resource,
         &parameters.step_functions.to_lowercase(),
-        &parameters.step_functions.to_uppercase()
+        &parameters.step_functions.to_uppercase(),
+        &parameters.schedule_state.to_uppercase(),
+        &parameters.schedule_expression,
+        &parameters.iterations_lambdas
     ));
     for runtime in runtimes.iter() {
         builder.push_str(&format!(
@@ -426,10 +442,10 @@ Resources:"#,
                                           Resource: arn:aws:states:::aws-sdk:s3:putObject
                                           Parameters:
                                             Body.$: $.Output.Payload
-                                            Bucket: bkt-lambda-benchmark
+                                            Bucket: {}
                                             Key.$: States.Format('results/{}-{{}}.json', $.iteration)
                                           ResultPath: null"#,
-                    &runtime_arch_mem, &runtime_arch_mem
+                    &runtime_arch_mem, &parameters.bucket_name, &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
                     break;

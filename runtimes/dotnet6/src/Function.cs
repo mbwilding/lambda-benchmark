@@ -14,12 +14,13 @@ public class Function
     // ReSharper disable once UnusedMember.Global
     public async Task<string> Handler(ILambdaContext context)
     {
+        var iterations = Convert.ToInt32(Environment.GetEnvironmentVariable("ITERATIONS_CODE"));
         var bucketName = Environment.GetEnvironmentVariable("BUCKET_NAME");
         var bucketKey = $"test/{context.FunctionName}/test.txt";
 
         var s3 = new AmazonS3Client();
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < iterations; i++)
         {
             var request = new PutObjectRequest
             {
