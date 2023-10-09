@@ -394,14 +394,8 @@ Resources:"#,
                                             LogStreamName.$: $.Output.Payload
                                             StartFromHead: false
                                             Limit: 1
-                                          ResultSelector:
-                                            runtime: {}
-                                            architecture: {}
-                                            memory: {}
-                                            iteration.$: $.iteration
-                                            log.$: $.Output.Events[0].Message
                                           ResultPath: $.Output"#,
-                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem, &runtime.display_name, &architecture, memory
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 builder.push_str(&format!(
                     r#"
@@ -411,10 +405,19 @@ Resources:"#,
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaLogProcessor.Arn
-                                            Payload.$: $
+                                            Payload:
+                                              runtime: {}
+                                              architecture: {}
+                                              memory: {}
+                                              iteration.$: $.iteration
+                                              log.$: $.Output.Events[0].Message
                                           InputPath: $.Output
                                           ResultPath: $.Output"#,
-                    &runtime_arch_mem, &runtime_arch_mem
+                    &runtime_arch_mem,
+                    &runtime_arch_mem,
+                    &runtime.display_name,
+                    &architecture,
+                    memory
                 ));
                 builder.push_str(&format!(
                     r#"
