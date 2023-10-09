@@ -48,7 +48,15 @@ jobs:
             echo "Bucket $bucket_name exists"
           fi
           
-          cargo lambda build --release --bin log-processor --arm64 --output-format zip
+          build_lambdas() {
+            bin_names=("$@")
+            for bin_name in "${bin_names[@]}"; do
+              echo "Building lambda: $bin_name"
+              cargo lambda build --release --bin "$bin_name" --arm64 --output-format zip
+            done
+          }
+
+          build_lambdas log-processor report-generator
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")

@@ -129,8 +129,12 @@ Resources:"#,
                   - s3:ListObjectsV2
                   - s3:GetObject
                   - s3:DeleteObjects
+                Resource: "arn:aws:s3:::{}/results/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
                 Resource: "arn:aws:s3:::{}/reports/*""#,
-        &parameters.bucket_name
+        &parameters.bucket_name, &parameters.bucket_name
     ));
 
     builder.push_str(&format!(
@@ -340,12 +344,17 @@ Resources:"#,
             Next: Parallel
             Parameters:
               iterations.$: States.ArrayRange(1, $.iterations, 1)
+          Report Generator:
+            Type: Task
+            End: true
+            Resource: arn:aws:states:::lambda:invoke
+            ResultPath: null
+            Parameters:
+              FunctionName: !GetAtt LambdaReportGenerator.Arn
           Parallel:
             Type: Parallel
-            End: true
-            ResultSelector:
-              runs.$: $.[*][*][*][*]
-            OutputPath: $.runs
+            Next: Report Generator
+            ResultPath: null
             Branches:"#,
         &step_functions_resource,
         &parameters.step_functions.to_lowercase(),
@@ -554,6 +563,7 @@ Resources:"#,
                 Action: lambda:InvokeFunction
                 Resource:
                   - !GetAtt LambdaLogProcessor.Arn
+                  - !GetAtt LambdaReportGenerator.Arn
               - Effect: Allow
                 Action: s3:GetObject
                 Resource:
