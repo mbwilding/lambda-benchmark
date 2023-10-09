@@ -44,7 +44,9 @@ async fn func(_event: LambdaEvent<Value>) -> Result<()> {
     let runs = fetch_runs(&s3, &bucket_name, &objects).await?;
     let grouped = group_and_sort(&runs);
 
-    upload_report(&bucket_name, &s3, grouped).await?;
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    upload_report(&s3, &bucket_name, &today, &grouped).await?;
+    upload_report(&s3, &bucket_name, "latest", &grouped).await?;
     delete_all_keys(&s3, &bucket_name, &objects).await?;
 
     Ok(())
@@ -134,17 +136,16 @@ fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u1
     grouped
 }
 
-async fn upload_report<T>(bucket_name: &str, s3: &Client, object: T) -> Result<()>
+async fn upload_report<T>(s3: &Client, bucket_name: &str, name: &str, object: &T) -> Result<()>
 where
     T: Serialize,
 {
-    let json = serde_json::to_string_pretty(&object)?.into_bytes();
+    let json = serde_json::to_string_pretty(object)?.into_bytes();
     let body = ByteStream::from(json);
 
-    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
     s3.put_object()
         .bucket(bucket_name)
-        .key(format!("reports/{}.json", today))
+        .key(format!("reports/{}.json", name))
         .content_type("application/json")
         .body(body)
         .send()
