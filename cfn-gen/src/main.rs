@@ -80,12 +80,33 @@ Resources:"#,
     );
 
     // IAM Roles
-    builder.push_str(&format!(
+    builder.push_str(
         r#"
-  RoleBacking:
+  RoleLogProcessor:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-backing-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-log-processor-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"#,
+    );
+
+    builder.push_str(&format!(
+        r#"
+
+  RoleReportGenerator:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-report-generator-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -105,12 +126,10 @@ Resources:"#,
             Statement:
               - Effect: Allow
                 Action:
-                  - s3:PutObject
-                Resource: "arn:aws:s3:::{}/metrics/*"
-              - Effect: Allow
-                Action:
-                  - logs:FilterLogEvents
-                Resource: "*""#,
+                  - s3:ListObjectsV2
+                  - s3:GetObject
+                  - s3:DeleteObjects
+                Resource: "arn:aws:s3:::{}/reports/*""#,
         &parameters.bucket_name
     ));
 
@@ -158,12 +177,12 @@ Resources:"#,
       Runtime: "provided.al2"
       Architectures: ["arm64"]
       Handler: "bootstrap"
-      Role: !GetAtt RoleBacking.Arn
+      Role: !GetAtt RoleLogProcessor.Arn
       MemorySize: 128
       Timeout: 60
       CodeUri:
         Bucket: "{}"
-        Key: "{}"
+        Key: "backing/log-processor.zip"
       Environment:
         Variables:
           BUCKET_NAME: "{}"
@@ -174,10 +193,36 @@ Resources:"#,
       LogGroupName: "/aws/lambda/benchmark-log-processor"
       RetentionInDays: {}
 "#,
-        &parameters.bucket_name,
-        "backing/log-processor.zip",
-        &parameters.bucket_name,
-        &parameters.log_retention_in_days
+        &parameters.bucket_name, &parameters.bucket_name, &parameters.log_retention_in_days
+    ));
+
+    builder.push_str(&format!(
+        r#"
+  LambdaReportGenerator:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "benchmark-report-generator"
+      Description: "Lambda Benchmark | Report Generator"
+      Runtime: "provided.al2"
+      Architectures: ["arm64"]
+      Handler: "bootstrap"
+      Role: !GetAtt RoleReportGenerator.Arn
+      MemorySize: 128
+      Timeout: 60
+      CodeUri:
+        Bucket: "{}"
+        Key: "backing/report-generator.zip"
+      Environment:
+        Variables:
+          BUCKET_NAME: "{}"
+
+  LogsReportGenerator:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/benchmark-report-generator"
+      RetentionInDays: {}
+"#,
+        &parameters.bucket_name, &parameters.bucket_name, &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions
