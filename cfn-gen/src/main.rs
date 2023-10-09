@@ -127,6 +127,10 @@ Resources:"#,
               - Effect: Allow
                 Action:
                   - s3:ListBucket
+                Resource: "arn:aws:s3:::{}"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
                   - s3:GetObject
                   - s3:DeleteObject
                 Resource: "arn:aws:s3:::{}/results/*"
@@ -134,7 +138,7 @@ Resources:"#,
                 Action:
                   - s3:PutObject
                 Resource: "arn:aws:s3:::{}/reports/*""#,
-        &parameters.bucket_name, &parameters.bucket_name
+        &parameters.bucket_name, &parameters.bucket_name, &parameters.bucket_name
     ));
 
     builder.push_str(&format!(
