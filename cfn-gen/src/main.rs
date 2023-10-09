@@ -338,7 +338,7 @@ Resources:"#,
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-runtime
+                                      StartAt: {}-cold-start
                                       States:"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
