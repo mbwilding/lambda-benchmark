@@ -261,7 +261,7 @@ Resources:"#,
     builder.push_str(&format!(
         r#"
   StateMachineBenchmarkRunner{}:
-    Type: AWS::StepFunctions::StateMachine
+    Type: AWS::Serverless::StateMachine
     Properties:
       StateMachineName: !Sub "stm-lambda-benchmark-{}"
       StateMachineType: {}
