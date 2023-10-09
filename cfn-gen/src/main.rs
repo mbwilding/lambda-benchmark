@@ -263,16 +263,16 @@ Resources:"#,
   StateMachineBenchmarkRunner{}:
     Type: AWS::Serverless::StateMachine
     Properties:
-      StateMachineName: !Sub "stm-lambda-benchmark-{}"
-      StateMachineType: {}
-      TracingConfiguration:
+      Name: !Sub "stm-lambda-benchmark-{}"
+      Type: {}
+      Tracing:
         Enabled: false
-      LoggingConfiguration:
+      Logging:
         Level: ERROR
         Destinations:
           - CloudWatchLogsLogGroup:
               LogGroupArn: !GetAtt LogsStateMachine.Arn
-      RoleArn: !GetAtt StepFunctionRole.Arn
+      Role: !GetAtt StepFunctionRole.Arn
       Definition:
         Comment: Lambda Benchmark Runner
         StartAt: Iterations
