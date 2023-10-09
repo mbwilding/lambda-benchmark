@@ -15,6 +15,7 @@ struct Parameters {
     memory_sizes: Vec<u16>,
     log_retention_in_days: u16,
     step_functions: String,
+    step_functions_debug: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -177,25 +178,25 @@ Resources:"#,
 
     // Runtime Lambda functions
     for memory in &parameters.memory_sizes {
-        for manifest in runtimes.iter() {
-            for architecture in &manifest.architectures {
+        for runtime in runtimes.iter() {
+            for architecture in &runtime.architectures {
                 let lambda_name = format!(
                     "LambdaBenchmark{}{}{}",
-                    &manifest.display_name.replace(['-', '_'], ""),
+                    &runtime.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
                     memory
                 );
                 let function_name = format!(
                     "benchmark-{}-{}-{}",
-                    &manifest.path,
+                    &runtime.path,
                     &architecture.replace('_', "-"),
                     &memory
                 );
                 let description = format!(
                     "{} | {} | {}",
-                    &manifest.display_name, &architecture, &memory
+                    &runtime.display_name, &architecture, &memory
                 );
-                let key = format!("runtimes/code_{}_{}.zip", &manifest.path, &architecture);
+                let key = format!("runtimes/code_{}_{}.zip", &runtime.path, &architecture);
 
                 builder.push_str(&format!(
                     r#"
@@ -226,9 +227,9 @@ Resources:"#,
                     lambda_name,
                     function_name,
                     description,
-                    &manifest.runtime,
+                    &runtime.runtime,
                     architecture,
-                    &manifest.handler,
+                    &runtime.handler,
                     memory,
                     &parameters.bucket_name,
                     &key,
@@ -260,18 +261,18 @@ Resources:"#,
     builder.push_str(&format!(
         r#"
   StateMachineBenchmarkRunner{}:
-    Type: AWS::StepFunctions::StateMachine
+    Type: AWS::Serverless::StateMachine
     Properties:
-      StateMachineName: !Sub "stm-lambda-benchmark-{}"
-      StateMachineType: {}
-      TracingConfiguration:
+      Name: !Sub "stm-lambda-benchmark-{}"
+      Type: {}
+      Tracing:
         Enabled: false
-      LoggingConfiguration:
+      Logging:
         Level: ERROR
         Destinations:
           - CloudWatchLogsLogGroup:
               LogGroupArn: !GetAtt LogsStateMachine.Arn
-      RoleArn: !GetAtt StepFunctionRole.Arn
+      Role: !GetAtt StepFunctionRole.Arn
       Definition:
         Comment: Lambda Benchmark Runner
         StartAt: Iterations
@@ -281,22 +282,9 @@ Resources:"#,
             Next: Parallel
             Parameters:
               iterations.$: States.ArrayRange(1, $.iterations, 1)
-          Log Processor:
-            Type: Task
-            End: true
-            Resource: arn:aws:states:::lambda:invoke
-            Parameters:
-              FunctionName: !GetAtt LambdaLogProcessor.Arn
-              Payload.$: $
-            Retry:
-              - ErrorEquals: [States.ALL]
-                IntervalSeconds: 2
-                BackoffRate: 2
-                MaxAttempts: 6
-            OutputPath: $.Payload
           Parallel:
             Type: Parallel
-            Next: Log Processor
+            End: true
             ResultSelector:
               runs.$: $.[*][*][*][*]
             OutputPath: $.runs
@@ -317,8 +305,8 @@ Resources:"#,
             &runtime.path, &runtime.path
         ));
         for architecture in &runtime.architectures {
-            let architecture = architecture.replace('_', "-");
-            let main = format!("{}-{}", &runtime.path, &architecture);
+            let architecture_filtered = architecture.replace('_', "-");
+            let runtime_arch_mem = format!("{}-{}", &runtime.path, &architecture_filtered);
             builder.push_str(&format!(
                 r#"
                       - StartAt: {}-para
@@ -327,22 +315,16 @@ Resources:"#,
                             Type: Parallel
                             End: true
                             Branches:"#,
-                &main, &main
+                &runtime_arch_mem, &runtime_arch_mem
             ));
             for memory in &parameters.memory_sizes {
-                let main = format!("{}-{}-{}", &runtime.path, &architecture, memory);
-                let secondary = format!(
+                let runtime_arch_mem =
+                    format!("{}-{}-{}", &runtime.path, &architecture_filtered, memory);
+                let resource_name = format!(
                     "{}{}{}",
                     &runtime.display_name,
-                    &architecture.replace('_', "").to_uppercase(),
+                    &architecture_filtered.replace(['-', '_'], "").to_uppercase(),
                     memory
-                )
-                .replace(['-', '_'], "");
-                let function_name = format!(
-                    "benchmark-{}-{}-{}",
-                    &runtime.path,
-                    &architecture.replace('_', "-"),
-                    &memory
                 );
                 builder.push_str(&format!(
                     r#"
@@ -351,41 +333,128 @@ Resources:"#,
                                   {}-iter:
                                     Type: Map
                                     End: true
-                                    ItemsPath: $.iterations
                                     MaxConcurrency: 1
+                                    ItemsPath: $.iterations
+                                    ItemSelector:
+                                      iteration.$: $$.Map.Item.Value
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-runtime
-                                      States:
+                                      StartAt: {}-cold-start
+                                      States:"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
+                ));
+                // Step function nodes
+                let bucket_key = format!(
+                    "runtimes/code_{}_{}.zip",
+                    &runtime.path,
+                    &architecture_filtered.replace('-', "_")
+                );
+                builder.push_str(&format!(
+                    r#"
+                                        {}-cold-start:
+                                          Type: Task
+                                          Next: {}-runtime
+                                          Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionCode
+                                          Parameters:
+                                            FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                            S3Bucket: {}
+                                            S3Key: {}
+                                          ResultPath: null"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
+                ));
+                builder.push_str(&format!(
+                    r#"
                                         {}-runtime:
                                           Type: Task
-                                          End: true
+                                          Next: {}-wait
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                          ResultSelector:
-                                            function_name: {}
-                                            log_stream.$: $.Payload"#,
-                    &main, &main, &main, &main, &secondary, &function_name
+                                          ResultPath: $.Output"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &resource_name
                 ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-wait:
+                                          Type: Wait
+                                          Next: {}-log-extractor
+                                          Seconds: 10"#,
+                    &runtime_arch_mem, &runtime_arch_mem
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-log-extractor:
+                                          Type: Task
+                                          Next: {}-log-processor
+                                          Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
+                                          Parameters:
+                                            LogGroupName: /aws/lambda/benchmark-{}
+                                            LogStreamName.$: $.Output.Payload
+                                            StartFromHead: false
+                                            Limit: 1
+                                          ResultSelector:
+                                            runtime: {}
+                                            architecture: {}
+                                            memory: {}
+                                            iteration.$: $.iteration
+                                            log.$: $.Events[0].Message
+                                          ResultPath: $.Output"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem, &runtime.display_name, &architecture, memory
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-log-processor:
+                                          Type: Task
+                                          Next: {}-upload
+                                          Resource: arn:aws:states:::lambda:invoke
+                                          Parameters:
+                                            FunctionName: !GetAtt LambdaLogProcessor.Arn
+                                            Payload.$: $
+                                          InputPath: $.Output
+                                          ResultPath: $.Output"#,
+                    &runtime_arch_mem, &runtime_arch_mem
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-upload:
+                                          Type: Task
+                                          End: true
+                                          Resource: arn:aws:states:::aws-sdk:s3:putObject
+                                          Parameters:
+                                            Body.$: $.Output.Payload
+                                            Bucket: bkt-lambda-benchmark
+                                            Key.$: States.Format('results/{}_{{}}.json', $.iteration)
+                                          ResultPath: null"#,
+                    &runtime_arch_mem, &runtime_arch_mem
+                ));
+                if parameters.step_functions_debug {
+                    break;
+                }
             }
+            if parameters.step_functions_debug {
+                break;
+            }
+        }
+        if parameters.step_functions_debug {
+            break;
         }
     }
 
     // State machine role
-    builder.push_str(r#"
+    builder.push_str(&format!(
+        r#"
 
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-step-functions-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-step-functions-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub "states.${AWS::Region}.amazonaws.com"
+              Service: !Sub "states.${{AWS::Region}}.amazonaws.com"
             Action: sts:AssumeRole
       Policies:
         - PolicyName: logs
@@ -413,7 +482,7 @@ Resources:"#,
                   - events:PutRule
                   - events:DescribeRule
                 Resource:
-                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ste-lambda-benchmark"
+                  - !Sub "arn:aws:states:${{AWS::Region}}:${{AWS::AccountId}}:stateMachine:ste-lambda-benchmark"
         - PolicyName: lambda
           PolicyDocument:
             Statement:
@@ -422,9 +491,18 @@ Resources:"#,
                 Resource:
                   - !GetAtt LambdaLogProcessor.Arn
               - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - arn:aws:s3:::{}/runtimes/*
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - arn:aws:s3:::{}/results/*
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
-                Resource:"#);
+                  - lambda:UpdateFunctionCode
+                Resource:"#, &parameters.bucket_name, &parameters.bucket_name));
 
     for runtime in runtimes.iter() {
         for architecture in &runtime.architectures {
