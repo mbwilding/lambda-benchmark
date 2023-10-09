@@ -126,9 +126,9 @@ Resources:"#,
             Statement:
               - Effect: Allow
                 Action:
-                  - s3:ListObjectsV2
+                  - s3:ListBucket
                   - s3:GetObject
-                  - s3:DeleteObjects
+                  - s3:DeleteObject
                 Resource: "arn:aws:s3:::{}/results/*"
               - Effect: Allow
                 Action:

@@ -8,6 +8,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
+use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
 struct Run {
@@ -30,18 +31,37 @@ struct Output {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    tracing_subscriber::fmt()
+        .json()
+        .with_max_level(tracing::Level::DEBUG)
+        .with_span_events(FmtSpan::CLOSE)
+        .with_current_span(true)
+        .with_span_list(false)
+        .with_target(true)
+        .with_line_number(true)
+        .without_time()
+        .init();
+
     lambda_runtime::run(service_fn(func)).await?;
     Ok(())
 }
 
 async fn func(_event: LambdaEvent<Value>) -> Result<()> {
     let bucket_name = std::env::var("BUCKET_NAME")?;
+    println!("Bucket name: {}", bucket_name);
 
     let aws_config = aws_config::load_from_env().await;
+    println!("AWS config collected");
+
     let s3 = Client::new(&aws_config);
+    println!("S3 client created");
 
     let objects = list_all_objects(&s3, &bucket_name, "results/").await?;
+    println!("Runs found: {})", objects.len());
+
     let runs = fetch_runs(&s3, &bucket_name, &objects).await?;
+    println!("Runs fetched: {}", runs.len());
+
     let grouped = group_and_sort(&runs);
 
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
@@ -87,25 +107,12 @@ async fn list_all_objects(
 }
 
 async fn fetch_runs(s3: &Client, bucket_name: &str, objects: &Vec<Object>) -> Result<Vec<Run>> {
-    let mut handles = Vec::new();
-
-    for object in objects {
-        let object_key = object.key().unwrap().to_string();
-        let s3 = s3.clone();
-        let bucket_name = bucket_name.to_string();
-
-        let handle = tokio::spawn(async move { fetch_run(&s3, &bucket_name, &object_key).await });
-
-        handles.push(handle);
-    }
-
     let mut runs = Vec::new();
-
-    for handle in handles {
-        let run_result = handle.await?;
-        runs.push(run_result?);
+    for object in objects {
+        let obj_key = object.key().unwrap();
+        let run = fetch_run(s3, bucket_name, obj_key).await?;
+        runs.push(run);
     }
-
     Ok(runs)
 }
 
@@ -164,6 +171,9 @@ where
         .body(body)
         .send()
         .await?;
+
+    println!("Report uploaded: {}", name);
+
     Ok(())
 }
 
@@ -186,6 +196,8 @@ async fn delete_all_keys(
         .delete(Delete::builder().set_objects(Some(delete_objects)).build())
         .send()
         .await?;
+
+    println!("Objects deleted: {}", objects.len());
 
     Ok(response)
 }
