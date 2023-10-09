@@ -411,7 +411,6 @@ Resources:"#,
                                               memory: {}
                                               iteration.$: $.iteration
                                               log.$: $.Output.Events[0].Message
-                                          InputPath: $.Output
                                           ResultPath: $.Output"#,
                     &runtime_arch_mem,
                     &runtime_arch_mem,
