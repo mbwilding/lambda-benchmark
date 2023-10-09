@@ -140,8 +140,9 @@ async fn upload_report<T>(s3: &Client, bucket_name: &str, name: &str, object: &T
 where
     T: Serialize,
 {
-    let json = serde_json::to_string_pretty(object)?.into_bytes();
-    let body = ByteStream::from(json);
+    let json = serde_json::to_string_pretty(object)?;
+    let bytes = json.into_bytes();
+    let body = ByteStream::from(bytes);
 
     s3.put_object()
         .bucket(bucket_name)
