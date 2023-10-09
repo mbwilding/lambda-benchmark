@@ -399,7 +399,7 @@ Resources:"#,
                                             architecture: {}
                                             memory: {}
                                             iteration.$: $.iteration
-                                            log.$: $.Events[0].Message
+                                            log.$: $.Output.Events[0].Message
                                           ResultPath: $.Output"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem, &runtime.display_name, &architecture, memory
                 ));
