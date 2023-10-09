@@ -76,7 +76,7 @@ jobs:
                   function_name="benchmark-${path}-${arch//_/-}-${memory_size}"
           
                   if aws lambda get-function --function-name "$function_name" > /dev/null 2>&1; then
-                    aws lambda update-function-code --function-name "$function_name" --s3-bucket "$bucket_name" --s3-key "$s3_key" > /dev/null 2>&1
+                    aws lambda update-function-code --function-name "$function_name" --s3-bucket "$bucket_name" --s3-key "$s3_key" > /dev/null
                     echo "Function '$function_name' code updated"
                   fi
                 done
