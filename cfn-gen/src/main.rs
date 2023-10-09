@@ -421,18 +421,19 @@ Resources:"#,
     }
 
     // State machine role
-    builder.push_str(r#"
+    builder.push_str(&format!(
+        r#"
 
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-step-functions-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-step-functions-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub "states.${AWS::Region}.amazonaws.com"
+              Service: !Sub "states.${{AWS::Region}}.amazonaws.com"
             Action: sts:AssumeRole
       Policies:
         - PolicyName: logs
@@ -460,7 +461,7 @@ Resources:"#,
                   - events:PutRule
                   - events:DescribeRule
                 Resource:
-                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ste-lambda-benchmark"
+                  - !Sub "arn:aws:states:${{AWS::Region}}:${{AWS::AccountId}}:stateMachine:ste-lambda-benchmark"
         - PolicyName: lambda
           PolicyDocument:
             Statement:
@@ -470,12 +471,13 @@ Resources:"#,
                   - !GetAtt LambdaLogProcessor.Arn
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: "arn:aws:s3:::{}/runtimes/*"
+                Resource:
+                  - arn:aws:s3:::{}/runtimes/*
               - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                   - lambda:UpdateFunctionCode
-                Resource:"#);
+                Resource:"#, &parameters.bucket_name));
 
     for runtime in runtimes.iter() {
         for architecture in &runtime.architectures {
