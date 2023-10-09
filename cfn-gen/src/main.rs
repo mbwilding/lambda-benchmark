@@ -178,25 +178,25 @@ Resources:"#,
 
     // Runtime Lambda functions
     for memory in &parameters.memory_sizes {
-        for manifest in runtimes.iter() {
-            for architecture in &manifest.architectures {
+        for runtime in runtimes.iter() {
+            for architecture in &runtime.architectures {
                 let lambda_name = format!(
                     "LambdaBenchmark{}{}{}",
-                    &manifest.display_name.replace(['-', '_'], ""),
+                    &runtime.display_name.replace(['-', '_'], ""),
                     &architecture.replace('_', "").to_uppercase(),
                     memory
                 );
                 let function_name = format!(
                     "benchmark-{}-{}-{}",
-                    &manifest.path,
+                    &runtime.path,
                     &architecture.replace('_', "-"),
                     &memory
                 );
                 let description = format!(
                     "{} | {} | {}",
-                    &manifest.display_name, &architecture, &memory
+                    &runtime.display_name, &architecture, &memory
                 );
-                let key = format!("runtimes/code_{}_{}.zip", &manifest.path, &architecture);
+                let key = format!("runtimes/code_{}_{}.zip", &runtime.path, &architecture);
 
                 builder.push_str(&format!(
                     r#"
@@ -227,9 +227,9 @@ Resources:"#,
                     lambda_name,
                     function_name,
                     description,
-                    &manifest.runtime,
+                    &runtime.runtime,
                     architecture,
-                    &manifest.handler,
+                    &runtime.handler,
                     memory,
                     &parameters.bucket_name,
                     &key,
@@ -343,6 +343,7 @@ Resources:"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
                 // Step function nodes
+                let bucket_key = format!("runtimes/code_{}_{}.zip", &runtime.path, &architecture);
                 builder.push_str(&format!(
                     r#"
                                         {}-cold-start:
@@ -351,8 +352,10 @@ Resources:"#,
                                           Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionCode
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                            S3Bucket: {}
+                                            S3Key: {}
                                           OutputPath: $.Payload"#,
-                    &runtime_arch_mem, &runtime_arch_mem, &resource_name
+                    &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
                 ));
                 builder.push_str(&format!(
                     r#"
@@ -462,8 +465,12 @@ Resources:"#,
                 Resource:
                   - !GetAtt LambdaLogProcessor.Arn
               - Effect: Allow
+                Action: s3:GetObject
+                Resource: "arn:aws:s3:::{}/runtimes/*"
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
+                  - lambda:UpdateFunctionCode
                 Resource:"#);
 
     for runtime in runtimes.iter() {
