@@ -323,9 +323,10 @@ Resources:"#,
                 let resource_name = format!(
                     "{}{}{}",
                     &runtime.display_name,
-                    &architecture_filtered.replace(['-', '_'], "").to_uppercase(),
+                    &architecture_filtered.to_uppercase(),
                     memory
-                );
+                )
+                .replace(['-', '_'], "");
                 builder.push_str(&format!(
                     r#"
                               - StartAt: {}-iter
@@ -424,7 +425,7 @@ Resources:"#,
                                           Parameters:
                                             Body.$: $.Output.Payload
                                             Bucket: bkt-lambda-benchmark
-                                            Key.$: States.Format('results/{}_{{}}.json', $.iteration)
+                                            Key.$: States.Format('results/{}-{{}}.json', $.iteration)
                                           ResultPath: null"#,
                     &runtime_arch_mem, &runtime_arch_mem
                 ));
