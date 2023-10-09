@@ -318,20 +318,14 @@ Resources:"#,
                 &main, &main
             ));
             for memory in &parameters.memory_sizes {
-                let main = format!("{}-{}-{}", &runtime.path, &architecture, memory);
-                let secondary = format!(
+                let runtime_arch_mem = format!("{}-{}-{}", &runtime.path, &architecture, memory);
+                let resource_name = format!(
                     "{}{}{}",
                     &runtime.display_name,
                     &architecture.replace('_', "").to_uppercase(),
                     memory
                 )
                 .replace(['-', '_'], "");
-                let function_name = format!(
-                    "benchmark-{}-{}-{}",
-                    &runtime.path,
-                    &architecture.replace('_', "-"),
-                    &memory
-                );
                 builder.push_str(&format!(
                     r#"
                               - StartAt: {}-iter
@@ -345,25 +339,66 @@ Resources:"#,
                                       ProcessorConfig:
                                         Mode: INLINE
                                       StartAt: {}-runtime
-                                      States:
+                                      States:"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
+                ));
+                // Step function nodes
+                builder.push_str(&format!(
+                    r#"
+                                        {}-cold-start:
+                                          Type: Task
+                                          Next: {}-runtime
+                                          Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionCode
+                                          Parameters:
+                                            FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                                          OutputPath: $.Payload"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &resource_name
+                ));
+                builder.push_str(&format!(
+                    r#"
                                         {}-runtime:
                                           Type: Task
-                                          Next: {}-log
+                                          Next: {}-wait
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                          OutputPath: $.Payload
-                                        {}-log:
+                                          OutputPath: $.Payload"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &resource_name
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-wait:
+                                          Type: Wait
+                                          Next: {}-log-extractor
+                                          Seconds: 5"#,
+                    &runtime_arch_mem, &runtime_arch_mem
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-log-extractor:
                                           Type: Task
-                                          End: true
+                                          Next: {}-log-processor
                                           Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
                                           Parameters:
-                                            LogGroupName: "/aws/lambda/benchmark-{}"
+                                            LogGroupName: /aws/lambda/benchmark-{}
                                             LogStreamName.$: $
                                             StartFromHead: false
                                             Limit: 1
-                                          OutputPath: $.Events[0].Message"#,
-                    &main, &main, &main, &main, &main, &secondary, &main, &main
+                                          ResultSelector:
+                                            log: $.Events[0].Message"#,
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
+                ));
+                builder.push_str(&format!(
+                    r#"
+                                        {}-log-processor:
+                                          Type: Task
+                                          End: true
+                                          Resource: arn:aws:states:::lambda:invoke
+                                          Parameters:
+                                            FunctionName: !GetAtt LambdaLogProcessor.Arn
+                                            Payload.$: $
+                                          OutputPath: $.Payload"#,
+                    &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
                     break;
