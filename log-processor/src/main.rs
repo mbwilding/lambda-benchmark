@@ -7,6 +7,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use tracing::info;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
@@ -47,7 +48,12 @@ async fn main() -> Result<(), Error> {
 
 async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let runs: Vec<Run> = from_value(event.payload).expect("Failed to parse event payload");
+
+    info!("Raw: {:#?}", &runs);
+
     let runs = remove_matching_log_streams(runs);
+
+    info!("Filtered: {:#?}", &runs);
 
     let aws_config = aws_config::load_from_env().await;
 
@@ -73,6 +79,8 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
     .into_iter()
     .collect();
 
+    info!("Patterns: {:#?}", &patterns);
+
     let mut grouped_runs: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
     for run in runs {
@@ -82,7 +90,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
             .push(run.log_stream);
     }
 
-    let mut metrics = Vec::new();
+    let mut metrics = HashMap::new();
 
     for (function_name, log_streams) in grouped_runs.iter() {
         let log_events = cloudwatch
@@ -116,13 +124,10 @@ async fn func(event: LambdaEvent<Value>) -> Result<()> {
             }
         });
 
-        let current = Collection {
-            function_name: function_name.clone(),
-            metrics: extracted_data,
-        };
-
-        metrics.push(current);
+        metrics.insert(function_name.to_string(), extracted_data);
     }
+
+    info!("Metrics: {:#?}", &metrics);
 
     let s3 = aws_sdk_s3::Client::new(&aws_config);
 

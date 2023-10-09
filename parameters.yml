@@ -3,6 +3,7 @@ bucket_name: "bkt-lambda-benchmark"
 log_retention_in_days: 7
 
 step_functions: express # 'express' or 'standard'
+step_functions_debug: true
 
 memory_sizes:
   - 128

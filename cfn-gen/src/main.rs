@@ -15,6 +15,7 @@ struct Parameters {
     memory_sizes: Vec<u16>,
     log_retention_in_days: u16,
     step_functions: String,
+    step_functions_debug: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -360,16 +361,35 @@ Resources:"#,
                                       States:
                                         {}-runtime:
                                           Type: Task
-                                          End: true
+                                          Next: {}-log
                                           Resource: arn:aws:states:::lambda:invoke
                                           Parameters:
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                           ResultSelector:
                                             function_name: {}
-                                            log_stream.$: $.Payload"#,
-                    &main, &main, &main, &main, &secondary, &function_name
+                                            log_stream.$: $.Payload
+                                        {}-log:
+                                          Type: Task
+                                          End: true
+                                          Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
+                                          Parameters:
+                                            LogGroupName: "/aws/lambda/benchmark-{}"
+                                            LogStreamName.$: $
+                                            StartFromHead: false
+                                            Limit: 1
+                                          OutputPath: $.Events[0].Message"#,
+                    &main, &main, &main, &main, &main, &secondary, &function_name, &main, &main
                 ));
+                if parameters.step_functions_debug {
+                    break;
+                }
             }
+            if parameters.step_functions_debug {
+                break;
+            }
+        }
+        if parameters.step_functions_debug {
+            break;
         }
     }
 
