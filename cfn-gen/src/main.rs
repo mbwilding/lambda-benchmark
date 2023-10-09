@@ -428,9 +428,8 @@ Resources:"#,
                                             Body.$: $.Output.Payload
                                             Bucket: bkt-lambda-benchmark
                                             Key.$: States.Format('results/{}-{{}}.json', $.iteration)
-                                          ResultSelector:
-                                            Key.$: States.Format('results/{}-{{}}.json', $.iteration)"#,
-                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
+                                          ResultPath: null"#,
+                    &runtime_arch_mem, &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
                     break;
