@@ -358,7 +358,7 @@ Resources:"#,
                                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
                                             S3Bucket: {}
                                             S3Key: {}
-                                          ResultPath: $.Discard"#,
+                                          ResultPath: null"#,
                     &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
                 ));
                 builder.push_str(&format!(
