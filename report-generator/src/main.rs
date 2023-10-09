@@ -8,6 +8,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
+use tracing::info;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
@@ -48,19 +49,19 @@ async fn main() -> Result<(), Error> {
 
 async fn func(_event: LambdaEvent<Value>) -> Result<()> {
     let bucket_name = std::env::var("BUCKET_NAME")?;
-    println!("Bucket name: {}", bucket_name);
+    info!("Bucket name: {}", bucket_name);
 
     let aws_config = aws_config::load_from_env().await;
-    println!("AWS config collected");
+    info!("AWS config collected");
 
     let s3 = Client::new(&aws_config);
-    println!("S3 client created");
+    info!("S3 client created");
 
     let objects = list_all_objects(&s3, &bucket_name, "results/").await?;
-    println!("Runs found: {})", objects.len());
+    info!("Runs found: {})", objects.len());
 
     let runs = fetch_runs(&s3, &bucket_name, &objects).await?;
-    println!("Runs fetched: {}", runs.len());
+    info!("Runs fetched: {}", runs.len());
 
     let grouped = group_and_sort(&runs);
 
@@ -172,7 +173,7 @@ where
         .send()
         .await?;
 
-    println!("Report uploaded: {}", name);
+    info!("Report uploaded: {}", name);
 
     Ok(())
 }
@@ -197,7 +198,7 @@ async fn delete_all_keys(
         .send()
         .await?;
 
-    println!("Objects deleted: {}", objects.len());
+    info!("Objects deleted: {}", objects.len());
 
     Ok(response)
 }
