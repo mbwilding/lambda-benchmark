@@ -305,8 +305,8 @@ Resources:"#,
             &runtime.path, &runtime.path
         ));
         for architecture in &runtime.architectures {
-            let architecture = architecture.replace('_', "-");
-            let main = format!("{}-{}", &runtime.path, &architecture);
+            let architecture_filtered = architecture.replace('_', "-");
+            let runtime_arch_mem = format!("{}-{}", &runtime.path, &architecture_filtered);
             builder.push_str(&format!(
                 r#"
                       - StartAt: {}-para
@@ -315,17 +315,17 @@ Resources:"#,
                             Type: Parallel
                             End: true
                             Branches:"#,
-                &main, &main
+                &runtime_arch_mem, &runtime_arch_mem
             ));
             for memory in &parameters.memory_sizes {
-                let runtime_arch_mem = format!("{}-{}-{}", &runtime.path, &architecture, memory);
+                let runtime_arch_mem =
+                    format!("{}-{}-{}", &runtime.path, &architecture_filtered, memory);
                 let resource_name = format!(
                     "{}{}{}",
                     &runtime.display_name,
-                    &architecture.replace('_', "").to_uppercase(),
+                    &architecture_filtered.replace(['-', '_'], "").to_uppercase(),
                     memory
-                )
-                .replace(['-', '_'], "");
+                );
                 builder.push_str(&format!(
                     r#"
                               - StartAt: {}-iter
@@ -333,8 +333,10 @@ Resources:"#,
                                   {}-iter:
                                     Type: Map
                                     End: true
-                                    ItemsPath: $.iterations
                                     MaxConcurrency: 1
+                                    ItemsPath: $.iterations
+                                    ItemSelector:
+                                      iteration.$: $$.Map.Item.Value
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
@@ -346,7 +348,7 @@ Resources:"#,
                 let bucket_key = format!(
                     "runtimes/code_{}_{}.zip",
                     &runtime.path,
-                    &architecture.replace('-', "_")
+                    &architecture_filtered.replace('-', "_")
                 );
                 builder.push_str(&format!(
                     r#"
@@ -388,13 +390,17 @@ Resources:"#,
                                           Resource: arn:aws:states:::aws-sdk:cloudwatchlogs:getLogEvents
                                           Parameters:
                                             LogGroupName: /aws/lambda/benchmark-{}
-                                            LogStreamName.$: $
+                                            LogStreamName.$: $.Output.Payload
                                             StartFromHead: false
                                             Limit: 1
                                           ResultSelector:
+                                            runtime: {}
+                                            architecture: {}
+                                            memory: {}
+                                            iteration.$: $.iteration
                                             log.$: $.Events[0].Message
                                           ResultPath: $.Output"#,
-                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
+                    &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem, &runtime.display_name, &architecture, memory
                 ));
                 builder.push_str(&format!(
                     r#"
@@ -418,7 +424,8 @@ Resources:"#,
                                           Parameters:
                                             Body.$: $.Output.Payload
                                             Bucket: bkt-lambda-benchmark
-                                            Key.$: States.Format('results/{}_{{}}', $.iteration)"#,
+                                            Key.$: States.Format('results/{}_{{}}.json', $.iteration)
+                                          ResultPath: null"#,
                     &runtime_arch_mem, &runtime_arch_mem
                 ));
                 if parameters.step_functions_debug {
