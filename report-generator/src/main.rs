@@ -8,7 +8,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use tracing::info;
+use tracing::{debug, info};
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
@@ -34,13 +34,11 @@ struct Output {
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
         .json()
-        .with_max_level(tracing::Level::DEBUG)
-        .with_span_events(FmtSpan::CLOSE)
-        .with_current_span(true)
+        .with_max_level(tracing::Level::INFO)
+        .with_current_span(false)
         .with_span_list(false)
         .with_target(true)
         .with_line_number(true)
-        .without_time()
         .init();
 
     lambda_runtime::run(service_fn(func)).await?;
@@ -49,13 +47,13 @@ async fn main() -> Result<(), Error> {
 
 async fn func(_event: LambdaEvent<Value>) -> Result<()> {
     let bucket_name = std::env::var("BUCKET_NAME")?;
-    info!("Bucket name: {}", bucket_name);
+    debug!("Bucket name: {}", bucket_name);
 
     let aws_config = aws_config::load_from_env().await;
-    info!("AWS config collected");
+    debug!("AWS config collected");
 
     let s3 = Client::new(&aws_config);
-    info!("S3 client created");
+    debug!("S3 client created");
 
     let objects = list_all_objects(&s3, &bucket_name, "results/").await?;
     info!("Runs found: {})", objects.len());
@@ -198,7 +196,7 @@ async fn delete_all_keys(
         .send()
         .await?;
 
-    info!("Objects deleted: {}", objects.len());
+    info!("Runs deleted: {}", objects.len());
 
     Ok(response)
 }
