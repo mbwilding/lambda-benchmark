@@ -85,7 +85,7 @@ Resources:"#,
   RoleLogProcessor:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-log-processor-role"
+      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-log-processor-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
