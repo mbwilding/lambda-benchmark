@@ -5,15 +5,21 @@ mod app;
 use anyhow::Result;
 pub use app::LambdaBenchmark;
 use egui::Color32;
-use rust_decimal::Decimal;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Deserialize)]
 pub struct Report {
     iteration: u8,
-    duration: f64,
+    duration: f32,
     max_memory_used: u16,
+    init_duration: f32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReportAverage {
+    duration: f64,
+    max_memory_used: f64,
     init_duration: f64,
 }
 
@@ -45,32 +51,45 @@ pub fn str_to_color32(str: &str) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
-fn calculate_averages(data: &BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>) {
-    for (runtime, architecture_map) in data {
-        for (architecture, memory_map) in architecture_map {
-            for (memory, reports) in memory_map {
-                let total_count = reports.len() as f64;
+fn calculate_averages(
+    data: &BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
+) -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>> {
+    let mut averages: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>> =
+        BTreeMap::new();
 
-                let avg_duration: f64 =
-                    reports.iter().map(|r| r.duration).sum::<f64>() / total_count;
+    for (runtime, architecture_map) in data.iter() {
+        for (architecture, memory_map) in architecture_map.iter() {
+            for (memory, reports) in memory_map.iter() {
+                let total_count = reports.len() as f32;
 
-                let avg_max_memory: f64 = reports
+                let avg_duration: f32 =
+                    reports.iter().map(|r| r.duration).sum::<f32>() / total_count;
+
+                let avg_max_memory: f32 = reports
                     .iter()
-                    .map(|r| f64::from(r.max_memory_used))
-                    .sum::<f64>()
+                    .map(|r| f32::from(r.max_memory_used))
+                    .sum::<f32>()
                     / total_count;
 
-                let avg_init_duration: f64 =
-                    reports.iter().map(|r| r.init_duration).sum::<f64>() / total_count;
+                let avg_init_duration: f32 =
+                    reports.iter().map(|r| r.init_duration).sum::<f32>() / total_count;
 
-                println!(
-                    "Average values for ({}, {}, {}):",
-                    runtime, architecture, memory
-                );
-                println!("\tAverage duration: {:.2}", avg_duration);
-                println!("\tAverage max memory used: {:.2}", avg_max_memory);
-                println!("\tAverage init duration: {:.2}\n", avg_init_duration);
+                let average = ReportAverage {
+                    duration: avg_duration as f64,
+                    max_memory_used: avg_max_memory as f64,
+                    init_duration: avg_init_duration as f64,
+                };
+
+                // Insert the average into our return structure.
+                averages
+                    .entry(runtime.clone())
+                    .or_default()
+                    .entry(architecture.clone())
+                    .or_default()
+                    .insert(*memory, average);
             }
         }
     }
+
+    averages
 }

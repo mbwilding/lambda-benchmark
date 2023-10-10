@@ -1,7 +1,6 @@
-use crate::{calculate_averages, load_latest_report, str_to_color32, Report};
-use egui::{remap, Color32};
+use crate::{calculate_averages, load_latest_report, str_to_color32, Report, ReportAverage};
+use egui::remap;
 use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
-use rust_decimal::prelude::ToPrimitive;
 use std::collections::BTreeMap;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -9,13 +8,17 @@ use std::collections::BTreeMap;
 pub struct LambdaBenchmark {
     #[serde(skip)]
     report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
+
+    #[serde(skip)]
+    average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,
 }
 
 impl Default for LambdaBenchmark {
     fn default() -> Self {
         let report = load_latest_report().unwrap_or_default();
+        let average = calculate_averages(&report);
 
-        Self { report }
+        Self { report, average }
     }
 }
 
@@ -69,73 +72,52 @@ impl eframe::App for LambdaBenchmark {
 
             ui.separator();
 
-            calculate_averages(&self.report);
-
             let _ = Plot::new("lines_demo")
                 .legend(Legend::default())
                 .width(ui.available_width())
                 .height(ui.available_height())
-                .data_aspect(1.0)
-                //.view_aspect(1.0)
-                //.y_axis_width(4)
-                //.show_axes(self.show_axes)
-                //.show_grid(self.show_grid)
+                .x_axis_label("Memory (MB)")
+                .y_axis_label("Duration (ms)")
+                .auto_bounds_x()
+                .auto_bounds_y()
+                //.clamp_grid(true)
+                //.link_cursor()
                 .show(ui, |plot| {
-                    // plotting memory_allocated (x) against duration_ms (y)
-                    self.report.iter().for_each(|(&ref runtime, &ref runtime_map)| {
-                        let n = 512;
-                        let points: PlotPoints = (0..=n)
-                            .map(|i| {
-                                let t = remap(i as f64, 0.0..=(n as f64), 0.0..=std::f64::consts::TAU);
-                                let r = 1.5;
-                                [
-                                    r * t.cos(),
-                                    r * t.sin(),
-                                ]
-                            })
-                            .collect();
+                    for (runtime, architecture_map) in &self.average {
+                        for (architecture, memory_map) in architecture_map {
+                            let plot_points = PlotPoints::new(
+                                memory_map
+                                    .iter()
+                                    .map(|(&memory_allocated, report_average)| {
+                                        [memory_allocated as f64, report_average.duration]
+                                    })
+                                    .collect::<Vec<[f64; 2]>>(),
+                            );
 
-                        // TODO: Only do one architecture for now
-                        runtime_map.first_key_value().map(|(architecture, architecture_map)| {
-                            println!("{} {}", runtime, architecture);
-                        });
+                            let name = format!("{} - {}", runtime, architecture);
 
-                        plot.line(Line::new(points)
-                            .name(runtime)
-                            .style(LineStyle::Solid)
-                            .color(str_to_color32(runtime)));
+                            plot.line(
+                                Line::new(plot_points)
+                                    .name(name)
+                                    .style(LineStyle::Solid)
+                                    .color(str_to_color32(runtime)),
+                            );
 
-                        //runtime_map.iter().for_each(|(&architecture, &architecture_map)| {
-                        //    architecture_map.iter().for_each(|(&memory, &memory_map)| {
-                        //        let mut line = Line::new(format!("{} {} {}", runtime, architecture, memory));
-                        //        line.points(memory_map.iter().map(|report| (memory, report.duration.to_f64().unwrap())));
-                        //        plot.line(line);
-                        //    });
-                        //});
-                    });
-                }).response;
-
-            if false {
-                for runtime_map in self.report.iter() {
-                    let runtime = runtime_map.0;
-                    for architecture_map in runtime_map.1 {
-                        let architecture = architecture_map.0;
-                        for memory_map in architecture_map.1 {
-                            let memory = memory_map.0;
-                            for report in memory_map.1 {
-                                ui.label(format!(
-                                    "Runtime: {}, Architecture: {}, Memory: {} MB, Iteration: {}, Init Duration: {} ms, Duration: {} ms, Max Memory Used: {} MB",
-                                    runtime, architecture, memory, report.iteration, report.init_duration, report.duration, report.max_memory_used
-                                ));
-                            }
+                            break; // TODO: Remove this break
                         }
                     }
-                }
-            }
+                })
+                .response;
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
-                egui::warn_if_debug_build(ui);
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.label("Powered by ");
+                    ui.hyperlink_to(
+                        "Lambda Benchmark",
+                        "https://github.com/mbwilding/lambda-benchmark",
+                    );
+                });
             });
         });
     }
@@ -143,18 +125,4 @@ impl eframe::App for LambdaBenchmark {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
-}
-
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
 }
