@@ -5,3 +5,6 @@ members = [
     "log_processor",
     "report_generator"
 ]
+exclude = [
+    "front_end"
+]
