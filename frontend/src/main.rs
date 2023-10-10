@@ -13,7 +13,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Lambda Benchmark",
         native_options,
-        Box::new(|cc| Box::new(front_end::LambdaBenchmark::new(cc))),
+        Box::new(|cc| Box::new(frontend::LambdaBenchmark::new(cc))),
     )
 }
 
@@ -28,7 +28,7 @@ fn main() {
             .start(
                 "the_canvas_id",
                 web_options,
-                Box::new(|cc| Box::new(front_end::LambdaBenchmark::new(cc))),
+                Box::new(|cc| Box::new(frontend::LambdaBenchmark::new(cc))),
             )
             .await
             .expect("failed to start eframe");

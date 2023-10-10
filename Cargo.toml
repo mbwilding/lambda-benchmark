@@ -6,5 +6,5 @@ members = [
     "report_generator"
 ]
 exclude = [
-    "front_end"
+    "frontend"
 ]

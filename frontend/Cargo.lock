@@ -596,7 +596,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "front_end"
+name = "frontend"
 version = "0.1.0"
 dependencies = [
  "eframe",

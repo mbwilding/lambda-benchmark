@@ -1,8 +1,6 @@
-/target
 .idea
 template.yml
 **/node_modules/
 **/target/
 **/bin/
-
 **/obj/
