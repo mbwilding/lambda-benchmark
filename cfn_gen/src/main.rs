@@ -190,7 +190,7 @@ Resources:"#,
       Timeout: 60
       CodeUri:
         Bucket: "{}"
-        Key: "backing/log-processor.zip"
+        Key: "backing/log_processor.zip"
       Environment:
         Variables:
           BUCKET_NAME: "{}"
@@ -219,7 +219,7 @@ Resources:"#,
       Timeout: 60
       CodeUri:
         Bucket: "{}"
-        Key: "backing/report-generator.zip"
+        Key: "backing/report_generator.zip"
       Environment:
         Variables:
           BUCKET_NAME: "{}"
