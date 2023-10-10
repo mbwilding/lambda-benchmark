@@ -398,29 +398,28 @@ Resources:"#,
                                     ItemProcessor:
                                       ProcessorConfig:
                                         Mode: INLINE
-                                      StartAt: {}-cold-start
+                                      StartAt: {}-runtime
                                       States:"#,
                     &runtime_arch_mem, &runtime_arch_mem, &runtime_arch_mem
                 ));
-                // Step function nodes
-                let bucket_key = format!(
-                    "runtimes/{}_{}.zip",
-                    &runtime.path,
-                    &architecture_filtered.replace('-', "_")
-                );
-                builder.push_str(&format!(
-                    r#"
-                                        {}-cold-start:
-                                          Type: Task
-                                          Next: {}-runtime
-                                          Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionCode
-                                          Parameters:
-                                            FunctionName: !GetAtt LambdaBenchmark{}.Arn
-                                            S3Bucket: {}
-                                            S3Key: {}
-                                          ResultPath: null"#,
-                    &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
-                ));
+                // let bucket_key = format!(
+                //     "runtimes/{}_{}.zip",
+                //     &runtime.path,
+                //     &architecture_filtered.replace('-', "_")
+                // );
+                // builder.push_str(&format!(
+                //     r#"
+                //                         {}-cold-start:
+                //                           Type: Task
+                //                           Next: {}-runtime
+                //                           Resource: arn:aws:states:::aws-sdk:lambda:updateFunctionCode
+                //                           Parameters:
+                //                             FunctionName: !GetAtt LambdaBenchmark{}.Arn
+                //                             S3Bucket: {}
+                //                             S3Key: {}
+                //                           ResultPath: null"#,
+                //     &runtime_arch_mem, &runtime_arch_mem, &resource_name, &parameters.bucket_name, &bucket_key
+                // ));
                 builder.push_str(&format!(
                     r#"
                                         {}-runtime:
