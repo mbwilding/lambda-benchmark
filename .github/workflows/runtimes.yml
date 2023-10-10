@@ -62,7 +62,7 @@ jobs:
               echo "Building '$file_path' [$arch] completed"
               echo "::endgroup::"
 
-              zip="code_${path}_${arch}.zip"
+              zip="${path}_${arch}.zip"
               file="${file_path}/${zip}"
               s3_key="runtimes/${zip}"
 

@@ -253,7 +253,7 @@ Resources:"#,
                     "{} | {} | {}",
                     &runtime.display_name, &architecture, &memory
                 );
-                let key = format!("runtimes/code_{}_{}.zip", &runtime.path, &architecture);
+                let key = format!("runtimes/{}_{}.zip", &runtime.path, &architecture);
 
                 builder.push_str(&format!(
                     r#"
@@ -421,7 +421,7 @@ Resources:"#,
                 ));
                 // Step function nodes
                 let bucket_key = format!(
-                    "runtimes/code_{}_{}.zip",
+                    "runtimes/{}_{}.zip",
                     &runtime.path,
                     &architecture_filtered.replace('-', "_")
                 );
