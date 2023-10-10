@@ -70,14 +70,22 @@ fn build_cloudformation(parameters: &Parameters, runtimes: &[Manifest]) -> Resul
     let mut builder = String::new();
 
     // Setup the template
-    builder.push_str(
+    builder.push_str(&format!(
         r#"---
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: "Lambda Benchmark"
 
+Globals:
+  Function:
+    Timeout: 900
+    Environment:
+      Variables:
+        BUCKET_NAME: "{}"
+        ITERATIONS_CODE: "{}"
 Resources:"#,
-    );
+        &parameters.bucket_name, &parameters.iterations_code
+    ));
 
     // IAM Roles
     builder.push_str(
@@ -102,7 +110,6 @@ Resources:"#,
 
     builder.push_str(&format!(
         r#"
-
   RoleReportGenerator:
     Type: AWS::IAM::Role
     Properties:
@@ -143,7 +150,6 @@ Resources:"#,
 
     builder.push_str(&format!(
         r#"
-
   RoleRuntime:
     Type: AWS::IAM::Role
     Properties:
@@ -169,8 +175,7 @@ Resources:"#,
                   - s3:PutObject
                   - s3:DeleteObject
                 Resource: "arn:aws:s3:::{}/test/*"
-      Path: /
-"#,
+      Path: /"#,
         &parameters.bucket_name
     ));
 
@@ -191,17 +196,12 @@ Resources:"#,
       CodeUri:
         Bucket: "{}"
         Key: "backing/log_processor.zip"
-      Environment:
-        Variables:
-          BUCKET_NAME: "{}"
-
   LogsLogProcessor:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/benchmark-log-processor"
-      RetentionInDays: {}
-"#,
-        &parameters.bucket_name, &parameters.bucket_name, &parameters.log_retention_in_days
+      RetentionInDays: {}"#,
+        &parameters.bucket_name, &parameters.log_retention_in_days
     ));
 
     builder.push_str(&format!(
@@ -220,17 +220,12 @@ Resources:"#,
       CodeUri:
         Bucket: "{}"
         Key: "backing/report_generator.zip"
-      Environment:
-        Variables:
-          BUCKET_NAME: "{}"
-
   LogsReportGenerator:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/benchmark-report-generator"
-      RetentionInDays: {}
-"#,
-        &parameters.bucket_name, &parameters.bucket_name, &parameters.log_retention_in_days
+      RetentionInDays: {}"#,
+        &parameters.bucket_name, &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions
@@ -267,21 +262,14 @@ Resources:"#,
       Handler: "{}"
       Role: !GetAtt RoleRuntime.Arn
       MemorySize: {}
-      Timeout: 900
       CodeUri:
         Bucket: "{}"
         Key: "{}"
-      Environment:
-          Variables:
-            BUCKET_NAME: "{}"
-            ITERATIONS_CODE: "{}"
-
   Logs{}:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/{}"
-      RetentionInDays: {}
-"#,
+      RetentionInDays: {}"#,
                     lambda_name,
                     function_name,
                     description,
@@ -291,8 +279,6 @@ Resources:"#,
                     memory,
                     &parameters.bucket_name,
                     &key,
-                    &parameters.bucket_name,
-                    &parameters.iterations_code,
                     &lambda_name,
                     &function_name,
                     &parameters.log_retention_in_days
@@ -519,9 +505,7 @@ Resources:"#,
     }
 
     // State machine role
-    builder.push_str(&format!(
-        r#"
-
+    builder.push_str(&format!(r#"
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -599,13 +583,11 @@ Resources:"#,
     // State machine log group
     builder.push_str(&format!(
         r#"
-
   LogsStateMachine:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/vendedlogs/states/lambda-benchmark
-      RetentionInDays: {}
-"#,
+      RetentionInDays: {}"#,
         &parameters.log_retention_in_days
     ));
 
