@@ -1,18 +1,23 @@
+use crate::Report;
+use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::BufReader;
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct LambdaBenchmark {
-    label: String,
-
     #[serde(skip)]
-    value: f32,
+    report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
 }
 
 impl Default for LambdaBenchmark {
     fn default() -> Self {
-        Self {
-            label: "Hello earthlings!".to_owned(),
-            value: 2.7,
-        }
+        let file = File::open("reports/latest.json").expect("Unable to open file");
+        let reader = BufReader::new(file);
+        let report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
+            serde_json::from_reader(reader).expect("Unable to parse file");
+
+        Self { report }
     }
 }
 
@@ -47,22 +52,23 @@ impl eframe::App for LambdaBenchmark {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Lambda Benchmark");
 
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(&mut self.label);
-            });
-
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
-
             ui.separator();
 
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
+            for runtime_map in self.report.iter() {
+                let runtime = runtime_map.0;
+                for architecture_map in runtime_map.1 {
+                    let architecture = architecture_map.0;
+                    for memory_map in architecture_map.1 {
+                        let memory = memory_map.0;
+                        for report in memory_map.1 {
+                            ui.label(format!(
+                                "Runtime: {}, Architecture: {}, Memory: {} MB, Iteration: {}, Init Duration: {} ms, Duration: {} ms, Max Memory Used: {} MB",
+                                runtime, architecture, memory, report.iteration, report.init_duration, report.duration, report.max_memory_used
+                            ));
+                        }
+                    }
+                }
+            }
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);

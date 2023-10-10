@@ -30,14 +30,14 @@ public class Function
                 ContentBody = i.ToString()
             };
 
-            await s3.PutObjectAsync(request);
+            await s3.PutObjectAsync(request).ConfigureAwait(false);
         }
 
         await s3.DeleteObjectAsync(new DeleteObjectRequest
         {
             BucketName = bucketName,
             Key = bucketKey
-        });
+        }).ConfigureAwait(false);
 
         return context.LogStreamName;
     }

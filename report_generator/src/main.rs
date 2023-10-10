@@ -22,7 +22,7 @@ struct Run {
 }
 
 #[derive(Debug, Serialize)]
-struct Output {
+struct Report {
     iteration: u8,
     duration: Decimal,
     max_memory_used: u16,
@@ -129,12 +129,12 @@ async fn fetch_run(s3: &Client, bucket_name: &str, object_key: &str) -> Result<R
     Ok(run)
 }
 
-fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Output>>>> {
-    let mut grouped: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Output>>>> =
+fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> {
+    let mut grouped: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
         BTreeMap::new();
 
     for run in runs {
-        let output = Output {
+        let report = Report {
             iteration: run.iteration,
             duration: run.duration,
             max_memory_used: run.max_memory_used,
@@ -148,7 +148,7 @@ fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u1
             .or_default()
             .entry(run.memory)
             .or_default()
-            .push(output);
+            .push(report);
     }
 
     grouped
