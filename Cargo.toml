@@ -3,6 +3,5 @@ resolver = "2"
 members = [
     "cfn_gen",
     "log_processor",
-    "report_generator",
-    "front_end"
+    "report_generator"
 ]
