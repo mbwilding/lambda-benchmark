@@ -75,16 +75,17 @@ fn build_cloudformation(parameters: &Parameters, runtimes: &[Manifest]) -> Resul
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: "Lambda Benchmark"
-
 Globals:
   Function:
     Timeout: 900
+    CodeUri:
+      Bucket: "{}"
     Environment:
       Variables:
         BUCKET_NAME: "{}"
         ITERATIONS_CODE: "{}"
 Resources:"#,
-        &parameters.bucket_name, &parameters.iterations_code
+        &parameters.bucket_name, &parameters.bucket_name, &parameters.iterations_code
     ));
 
     // IAM Roles
@@ -194,14 +195,13 @@ Resources:"#,
       MemorySize: 128
       Timeout: 60
       CodeUri:
-        Bucket: "{}"
         Key: "backing/log_processor.zip"
   LogsLogProcessor:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/benchmark-log-processor"
       RetentionInDays: {}"#,
-        &parameters.bucket_name, &parameters.log_retention_in_days
+        &parameters.log_retention_in_days
     ));
 
     builder.push_str(&format!(
@@ -218,14 +218,13 @@ Resources:"#,
       MemorySize: 128
       Timeout: 60
       CodeUri:
-        Bucket: "{}"
         Key: "backing/report_generator.zip"
   LogsReportGenerator:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/benchmark-report-generator"
       RetentionInDays: {}"#,
-        &parameters.bucket_name, &parameters.log_retention_in_days
+        &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions
@@ -263,7 +262,6 @@ Resources:"#,
       Role: !GetAtt RoleRuntime.Arn
       MemorySize: {}
       CodeUri:
-        Bucket: "{}"
         Key: "{}"
   Logs{}:
     Type: AWS::Logs::LogGroup
@@ -277,7 +275,6 @@ Resources:"#,
                     architecture,
                     &runtime.handler,
                     memory,
-                    &parameters.bucket_name,
                     &key,
                     &lambda_name,
                     &function_name,
