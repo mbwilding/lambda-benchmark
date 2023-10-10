@@ -234,9 +234,10 @@ Resources:"#,
     ));
 
     // Runtime Lambda functions
-    for memory in &parameters.memory_sizes {
-        for runtime in runtimes.iter() {
-            for architecture in &runtime.architectures {
+    for runtime in runtimes.iter() {
+        for architecture in &runtime.architectures {
+            let key = format!("runtimes/{}_{}.zip", &runtime.path, &architecture);
+            for memory in &parameters.memory_sizes {
                 let lambda_name = format!(
                     "LambdaBenchmark{}{}{}",
                     &runtime.display_name.replace(['-', '_'], ""),
@@ -253,7 +254,6 @@ Resources:"#,
                     "{} | {} | {}",
                     &runtime.display_name, &architecture, &memory
                 );
-                let key = format!("runtimes/{}_{}.zip", &runtime.path, &architecture);
 
                 builder.push_str(&format!(
                     r#"
