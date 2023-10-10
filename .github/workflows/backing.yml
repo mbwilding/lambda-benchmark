@@ -58,7 +58,7 @@ jobs:
             done
           }
 
-          build_lambdas log-processor report-generator
+          build_lambdas log_processor report_generator
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")")

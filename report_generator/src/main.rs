@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use tracing::{debug, info};
-use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Deserialize)]
 struct Run {
@@ -144,11 +143,11 @@ fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u1
 
         grouped
             .entry(run.runtime.clone())
-            .or_insert_with(BTreeMap::new)
+            .or_default()
             .entry(run.architecture.clone())
-            .or_insert_with(BTreeMap::new)
+            .or_default()
             .entry(run.memory)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(output);
     }
 

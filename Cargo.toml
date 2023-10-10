@@ -1,7 +1,8 @@
 ﻿[workspace]
 resolver = "2"
 members = [
-    "cfn-gen",
-    "log-processor",
-    "report-generator"
+    "cfn_gen",
+    "log_processor",
+    "report_generator",
+    "front_end"
 ]
