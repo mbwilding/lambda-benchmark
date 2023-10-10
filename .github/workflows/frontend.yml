@@ -41,7 +41,7 @@ jobs:
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
           mkdir -p dist/assets/reports
-          aws s3 sync s3://$bucket_name/reports/ dist/assets/reports/
+          aws s3 sync s3://$bucket_name/reports/ dist/reports/
       - name: "Deploy"
         uses: JamesIves/github-pages-deploy-action@v4
         with:
