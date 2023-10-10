@@ -11,6 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: "Setup yq"
+        uses: dcarbone/install-yq-action@v1.1.1
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: "Fetch and Place Reports from AWS S3"
+        run: |
+          parameters_json=$(yq -o=json '.' parameters.yml)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
+          mkdir -p frontend/assets/reports
+          aws s3 sync s3://$bucket_name/reports/ frontend/assets/reports/
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
