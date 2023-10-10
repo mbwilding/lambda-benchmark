@@ -10,7 +10,7 @@ pub struct LambdaBenchmark {
 impl Default for LambdaBenchmark {
     fn default() -> Self {
         Self {
-            label: "Hello World!".to_owned(),
+            label: "Hello earthlings!".to_owned(),
             value: 2.7,
         }
     }
