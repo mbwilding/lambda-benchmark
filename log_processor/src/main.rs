@@ -1,6 +1,8 @@
+extern crate core;
+
+use core::f32;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, json, Value};
 use std::collections::HashMap;
@@ -20,9 +22,9 @@ struct Output {
     architecture: String,
     memory: u16,
     iteration: u8,
-    duration: Decimal,
+    duration: f32,
     max_memory_used: u16,
-    init_duration: Decimal,
+    init_duration: f32,
 }
 
 #[tokio::main]
@@ -40,9 +42,9 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
         architecture: input.architecture,
         memory: input.memory,
         iteration: input.iteration,
-        duration: Decimal::from_str_exact(&extracted_data["duration"]).unwrap(),
+        duration: extracted_data["duration"].parse().unwrap(),
         max_memory_used: extracted_data["max_memory_used"].parse().unwrap(),
-        init_duration: Decimal::from_str_exact(&extracted_data["init_duration"]).unwrap(),
+        init_duration: extracted_data["init_duration"].parse().unwrap(),
     }))
 }
 

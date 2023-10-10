@@ -9,13 +9,9 @@ def handler(event, context):
 
     s3 = boto3.client('s3')
 
-    try:
-        for i in range(iterations):
-            s3.put_object(Bucket=bucket_name, Key=bucket_key, ContentType='text/plain', Body=str(i))
+    for i in range(iterations):
+        s3.put_object(Bucket=bucket_name, Key=bucket_key, ContentType='text/plain', Body=str(i))
 
-        s3.delete_object(Bucket=bucket_name, Key=bucket_key)
-
-    except Exception as e:
-        raise Exception(f"An error occurred: {str(e)}")
+    s3.delete_object(Bucket=bucket_name, Key=bucket_key)
 
     return context.log_stream_name
