@@ -3,7 +3,7 @@ bucket_name: "bkt-lambda-benchmark"
 log_retention_in_days: 7
 iterations_lambdas: 5
 iterations_code: 50
-schedule_state: ENABLED # 'ENABLED' or 'DISABLED'
+schedule_state: DISABLED # 'ENABLED' or 'DISABLED'
 schedule_expression: "cron(0 14 * * ? *)"
 
 step_functions: EXPRESS # 'EXPRESS' or 'STANDARD'
@@ -26,19 +26,5 @@ memory_sizes:
   - 1792
   - 1920
   - 2048
-  - 2176
-  - 2304
-  - 2432
-  - 2560
-  - 2688
-  - 2816
-  - 2944
   - 3072
-  - 3200
-  - 3328
-  - 3456
-  - 3584
-  - 3712
-  - 3840
-  - 3968
   - 4096
