@@ -1,5 +1,4 @@
 use crate::{calculate_averages, load_latest_report, str_to_color32, Report, ReportAverage};
-use egui::remap;
 use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
 use std::collections::BTreeMap;
 
@@ -94,7 +93,11 @@ impl eframe::App for LambdaBenchmark {
                                     .collect::<Vec<[f64; 2]>>(),
                             );
 
-                            let name = format!("{} - {}", runtime, architecture);
+                            let cold_start = memory_map.first_key_value().unwrap().1.init_duration;
+                            let name = format!(
+                                "{} [{}] | Cold Start: {:06.2} ms",
+                                runtime, architecture, cold_start
+                            );
 
                             plot.line(
                                 Line::new(plot_points)
