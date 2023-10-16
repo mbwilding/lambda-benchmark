@@ -3,7 +3,6 @@ mod app;
 pub use app::LambdaBenchmark;
 use egui::{Color32, Ui};
 use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
-use poll_promise::Promise;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::BTreeMap;
@@ -32,19 +31,26 @@ pub fn load_latest_report() -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, V
     let url =
         "https://bkt-lambda-benchmark-public.s3.ap-southeast-2.amazonaws.com/reports/latest.json";
 
-    let (sender, promise) = Promise::new();
-    let request = ehttp::Request::get(url);
-    ehttp::fetch(request, move |response| {
-        let resource = response.map(|response| {
-            let report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
-                serde_json::from_slice(response.bytes.as_slice()).unwrap();
-            report
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        reqwest::blocking::get(url).unwrap().json().unwrap()
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let (sender, promise) = poll_promise::Promise::new();
+        let request = ehttp::Request::get(url);
+        ehttp::fetch(request, move |response| {
+            let resource = response.map(|response| {
+                let report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
+                    serde_json::from_slice(response.bytes.as_slice()).unwrap();
+                report
+            });
+            sender.send(resource);
         });
-        sender.send(resource);
-    });
 
-    let response = promise.block_until_ready().clone().unwrap();
-    response
+        let response = promise.block_and_take().unwrap();
+        response
+    }
 }
 
 pub fn str_to_color32(str: &str) -> Color32 {
