@@ -1,13 +1,12 @@
 extern crate core;
 
 use anyhow::Result;
-use aws_lambda_events::cloudwatch_logs::AwsLogs;
+use aws_lambda_events::cloudwatch_logs::LogsEvent;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use regex::Regex;
 use serde::Serialize;
 use shared::s3::put;
 use tokio::sync::OnceCell;
-use tracing::debug;
 use tracing::log::info;
 
 #[derive(Debug, Serialize)]
@@ -30,7 +29,7 @@ struct Output {
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
         .json()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(tracing::Level::INFO)
         .with_current_span(false)
         .with_ansi(false)
         .without_time()
@@ -74,10 +73,12 @@ async fn get_s3() -> &'static aws_sdk_s3::Client {
     .await
 }
 
-async fn func(event: LambdaEvent<AwsLogs>) -> Result<(), Error> {
-    debug!("Received event: {:#?}", event);
+async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
+    info!("Received event: {:#?}", event);
 
-    let from_lambda = event.payload.data.log_stream.replace("/aws/lambda/", "");
+    let data = event.payload.aws_logs.data;
+
+    let from_lambda = data.log_stream.replace("/aws/lambda/", "");
     let function_name = from_lambda.replace("lambda-benchmark-", "");
     let tokens = function_name.split("-").collect::<Vec<&str>>();
 
@@ -96,7 +97,7 @@ async fn func(event: LambdaEvent<AwsLogs>) -> Result<(), Error> {
     let s3 = get_s3().await;
 
     let regex = get_regex().await;
-    for log in event.payload.data.log_events {
+    for log in data.log_events {
         for cap in regex.captures_iter(&log.message) {
             let output = Output {
                 runtime: runtime.to_string(),
