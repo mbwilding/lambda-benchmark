@@ -253,7 +253,11 @@ Resources:",
                 &runtime.display_name.replace(['-', '_', '.', ','], ""),
                 &architecture.replace('_', "").to_uppercase(),
             );
-            let function_name = format!("lambda-benchmark-{}-{}", &runtime.path, &architecture);
+            let function_name = format!(
+                "lambda-benchmark-{}-{}",
+                &runtime.path,
+                &architecture.replace('_', "-")
+            );
             let description = format!("{} | {}", &runtime.display_name, &architecture);
 
             builder.push_str(&format!(
