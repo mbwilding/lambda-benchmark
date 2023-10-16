@@ -104,6 +104,9 @@ Resources:",
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: ObjectWriter
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -111,10 +114,9 @@ Resources:",
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: AllowPublicRead
+          - Sid: PublicReadGetObject
             Effect: Allow
-            Principal:
-              AWS: "*"
+            Principal: "*"
             Action: s3:GetObject
             Resource: arn:aws:s3:::{}-public/*"#,
         &parameters.bucket_name, &parameters.bucket_name
