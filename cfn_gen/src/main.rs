@@ -476,7 +476,7 @@ Resources:",
             builder.push_str(&format!(
                 r#"
                   - !GetAtt LambdaBenchmark{}{}.Arn"#,
-                &runtime.display_name.replace(['-', '_'], ""),
+                &runtime.display_name.replace(['-', '_', '.', ','], ""),
                 &architecture.replace('_', "").to_uppercase()
             ));
         }
