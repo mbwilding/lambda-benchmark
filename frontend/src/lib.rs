@@ -126,13 +126,14 @@ pub fn draw_graph<F>(
     F: Fn(&ReportAverage) -> f64,
 {
     let y_axis_unit_cloned = y_axis_unit.to_string();
+    let y_axis = format!("{} ({})", y_axis_label, y_axis_unit);
 
     let _ = Plot::new(format!("graph_{}", &title))
         .legend(Legend::default())
         .width(ui.available_width())
         .height(ui.available_height())
         .x_axis_label("Memory Allocated (MB)")
-        .y_axis_label(y_axis_label)
+        .y_axis_label(&y_axis)
         .auto_bounds_x()
         .auto_bounds_y()
         .show_x(true)
@@ -144,12 +145,11 @@ pub fn draw_graph<F>(
         //.allow_double_click_reset(false)
         //.clamp_grid(true)
         //.link_cursor()
-        .label_formatter(move |name, value| {
-            if !name.is_empty() {
-                format!("{} MB | {:.2} {}", value.x, value.y, y_axis_unit_cloned)
-            } else {
-                "".to_owned()
-            }
+        .label_formatter(move |_name, value| {
+            format!(
+                "{:.0} (MB) | {:.2} ({})",
+                value.x, value.y, y_axis_unit_cloned
+            )
         })
         .show(ui, |plot| {
             for (runtime, architecture_map) in &self_.average {
