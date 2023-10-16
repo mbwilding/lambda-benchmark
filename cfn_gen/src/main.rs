@@ -183,7 +183,7 @@ Resources:",
   LambdaLogProcessor:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: benchmark-log-processor
+      FunctionName: lambda-benchmark-log-processor
       Description: Lambda Benchmark | Log Processor
       Runtime: provided.al2
       Architectures: [arm64]
@@ -228,7 +228,7 @@ Resources:",
   LambdaReportGenerator:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: benchmark-report-generator
+      FunctionName: lambda-benchmark-report-generator
       Description: Lambda Benchmark | Report Generator
       Runtime: provided.al2
       Architectures: [arm64]
