@@ -178,7 +178,7 @@ Resources:",
     ));
 
     // Backing Lambda functions
-    builder.push_str(&format!(
+    builder.push_str(
         r#"
   LambdaLogProcessor:
     Type: AWS::Serverless::Function
@@ -191,6 +191,30 @@ Resources:",
       Role: !GetAtt RoleLogProcessor.Arn
       CodeUri:
         Key: backing/log_processor.zip
+      Events:"#,
+    );
+
+    for runtime in runtimes.iter() {
+        for architecture in &runtime.architectures {
+            let lambda_name = format!(
+                "LambdaBenchmark{}{}",
+                &runtime.display_name.replace(['-', '_', '.'], ""),
+                &architecture.replace('_', "").to_uppercase(),
+            );
+            builder.push_str(&format!(
+                r#"
+        Logs{}:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName: !Ref Logs{}
+            FilterPattern: REPORT"#,
+                &lambda_name, &lambda_name
+            ));
+        }
+    }
+
+    builder.push_str(&format!(
+        r#"
   LogsLogProcessor:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -266,19 +290,6 @@ Resources:",
       LogGroupName: /aws/lambda/{}
       RetentionInDays: {}"#,
                 lambda_name, function_name, &parameters.log_retention_in_days
-            ));
-
-            builder.push_str(&format!(
-                r#"
-  SubscriptionFilter{}:
-    Type: AWS::Logs::SubscriptionFilter
-    Properties:
-      DestinationArn: !GetAtt LambdaLogProcessor.Arn
-      LogGroupName: !Ref Logs{}
-      FilterPattern: REPORT
-      FilterName: report-log-from-{}
-"#,
-                lambda_name, lambda_name, function_name
             ));
         }
     }
