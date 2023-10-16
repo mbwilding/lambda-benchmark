@@ -319,7 +319,7 @@ Resources:",
             Input: '{{"iterations": {}}}'
       Definition:
         Comment: Lambda Benchmark Runner
-        StartAt: benchmarks
+        StartAt: setup
         States:
           setup:
             Type: Pass
