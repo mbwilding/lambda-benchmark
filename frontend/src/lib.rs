@@ -59,25 +59,27 @@ fn calculate_averages(
 
     for (runtime, architecture_map) in data.iter() {
         for (architecture, memory_map) in architecture_map.iter() {
-            for (memory, reports) in memory_map.iter() {
-                let total_count = reports.len() as f32;
+            for (memory, iterations) in memory_map.iter() {
+                let total_count = iterations.len() as f32;
 
                 let avg_duration: f32 =
-                    reports.iter().map(|r| r.duration).sum::<f32>() / total_count;
+                    iterations.iter().map(|r| r.duration).sum::<f32>() / total_count;
 
-                let avg_max_memory: f32 = reports
+                let avg_max_memory: f32 = iterations
                     .iter()
                     .map(|r| f32::from(r.max_memory_used))
                     .sum::<f32>()
                     / total_count;
 
-                let avg_init_duration: f32 =
-                    reports.iter().map(|r| r.init_duration).sum::<f32>() / total_count;
+                // let avg_init_duration: f32 =
+                //     reports.iter().map(|r| r.init_duration).sum::<f32>() / total_count;
+
+                let init_duration = iterations.first().unwrap().init_duration;
 
                 let average = ReportAverage {
                     duration: avg_duration as f64,
                     max_memory_used: avg_max_memory as f64,
-                    init_duration: avg_init_duration as f64,
+                    init_duration: init_duration as f64,
                 };
 
                 // Insert the average into our return structure.
