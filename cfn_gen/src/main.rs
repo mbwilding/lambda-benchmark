@@ -98,6 +98,12 @@ Resources:",
     Type: AWS::S3::Bucket
     Properties:
       BucketName: {}-public
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -105,9 +111,10 @@ Resources:",
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: PublicReadGetObject
+          - Sid: AllowPublicRead
             Effect: Allow
-            Principal: "*"
+            Principal:
+              AWS: "*"
             Action: s3:GetObject
             Resource: arn:aws:s3:::{}-public/*"#,
         &parameters.bucket_name, &parameters.bucket_name
