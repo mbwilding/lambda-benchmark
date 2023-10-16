@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 #[serde(default)]
 pub struct LambdaBenchmark {
     #[serde(skip)]
-    report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
+    pub(crate) report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
 
     #[serde(skip)]
     pub average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,
@@ -24,7 +24,7 @@ pub struct LambdaBenchmark {
 
 impl Default for LambdaBenchmark {
     fn default() -> Self {
-        let report = load_latest_report().unwrap_or_default();
+        let report = load_latest_report();
         let average = calculate_averages(&report);
 
         let architectures: Vec<String> = report
