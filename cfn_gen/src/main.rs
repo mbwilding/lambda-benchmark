@@ -98,7 +98,6 @@ Resources:",
     Type: AWS::S3::Bucket
     Properties:
       BucketName: {}-public
-      AccessControl: PublicRead
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false
