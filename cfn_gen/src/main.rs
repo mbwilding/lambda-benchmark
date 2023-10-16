@@ -441,9 +441,9 @@ Resources:",
                 &runtime_arch, &runtime_arch, &lambda_name, &runtime_arch, &runtime_arch, &runtime_arch, &runtime_arch, &runtime_arch, &runtime_arch
             ));
 
-            //if parameters.step_functions_debug {
-            //    break;
-            //}
+            if parameters.step_functions_debug {
+                break;
+            }
         }
         if parameters.step_functions_debug {
             break;
