@@ -1,4 +1,4 @@
-name: Frontend
+name: Desktop
 
 on:
   workflow_dispatch:
