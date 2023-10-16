@@ -7,6 +7,8 @@ use regex::Regex;
 use serde::Serialize;
 use shared::s3::put;
 use tokio::sync::OnceCell;
+use tracing::debug;
+use tracing::log::info;
 
 #[derive(Debug, Serialize)]
 struct Output {
@@ -26,6 +28,16 @@ struct Output {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    tracing_subscriber::fmt()
+        .json()
+        .with_max_level(tracing::Level::DEBUG)
+        .with_current_span(false)
+        .with_ansi(false)
+        .without_time()
+        .with_target(false)
+        .with_line_number(true)
+        .init();
+
     lambda_runtime::run(service_fn(func)).await?;
     Ok(())
 }
@@ -63,13 +75,11 @@ async fn get_s3() -> &'static aws_sdk_s3::Client {
 }
 
 async fn func(event: LambdaEvent<AwsLogs>) -> Result<(), Error> {
-    println!("Received event: {:#?}", event);
+    debug!("Received event: {:#?}", event);
 
     let from_lambda = event.payload.data.log_stream.replace("/aws/lambda/", "");
     let function_name = from_lambda.replace("lambda-benchmark-", "");
     let tokens = function_name.split("-").collect::<Vec<&str>>();
-
-    // const functionName = `${project}-${path}-${memorySize}-${architecture}`;
 
     if tokens.len() != 2 {
         panic!("Invalid function name: {}", function_name)
@@ -81,8 +91,6 @@ async fn func(event: LambdaEvent<AwsLogs>) -> Result<(), Error> {
     if !get_runtimes().await.iter().any(|s| s == runtime) {
         panic!("Runtime {} not found in RUNTIMES", runtime);
     }
-
-    println!("Name: {}", runtime);
 
     let bucket = std::env::var("BUCKET_NAME").expect("BUCKET_NAME not set");
     let s3 = get_s3().await;
@@ -110,6 +118,11 @@ async fn func(event: LambdaEvent<AwsLogs>) -> Result<(), Error> {
                     .map(|m| m.as_str().parse::<u32>().ok())
                     .flatten(),
             };
+
+            info!(
+                "Name: {} | Arch: {} | Memory: {}",
+                &runtime, &architecture, &output.memory
+            );
 
             let request_id = cap["requestId"].to_string();
             put(
