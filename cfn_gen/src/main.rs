@@ -151,8 +151,7 @@ Resources:",
                   - s3:DeleteObject
                 Resource: arn:aws:s3:::{}/results/*
               - Effect: Allow
-                Action:
-                  - s3:PutObject
+                Action: s3:PutObject
                 Resource: arn:aws:s3:::{}/reports/*"#,
         &parameters.bucket_name, &parameters.bucket_name, &parameters.bucket_name
     ));
@@ -347,9 +346,20 @@ Resources:",
             Parameters:
               iterations.$: States.ArrayRange(1, $.iterations, 1)
               memory_array: [{}]
+          wait:
+            Type: Wait
+            Next: report
+            Seconds: 30
+          report:
+            Type: Task
+            End: true
+            Resource: arn:aws:states:::lambda:invoke
+            Parameters:
+              FunctionName: !GetAtt LambdaReportGenerator.Arn
+            ResultPath: null
           benchmarks:
             Type: Parallel
-            End: true
+            Next: wait
             ResultPath: null
             Branches:"#,
         &parameters.schedule_state.to_uppercase(),

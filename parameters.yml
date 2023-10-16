@@ -5,7 +5,7 @@ iterations_lambdas: 5
 iterations_code: 50
 schedule_state: DISABLED
 schedule_expression: cron(0 14 * * ? *)
-step_functions_debug: true
+step_functions_debug: false
 
 memory_sizes:
   - 128

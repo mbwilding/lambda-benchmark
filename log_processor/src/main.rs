@@ -10,7 +10,7 @@ use tokio::sync::OnceCell;
 use tracing::log::info;
 
 #[derive(Debug, Serialize)]
-struct Output {
+struct Run {
     runtime: String,
     architecture: String,
     memory: u16,
@@ -94,7 +94,7 @@ async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
     let regex = get_regex().await;
     for log in data.log_events {
         for cap in regex.captures_iter(&log.message) {
-            let output = Output {
+            let output = Run {
                 runtime: runtime.to_string(),
                 architecture: architecture.to_string(),
                 memory: cap["memorySize"].parse::<u16>()?,
