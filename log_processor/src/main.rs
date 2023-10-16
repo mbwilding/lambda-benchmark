@@ -74,11 +74,9 @@ async fn get_s3() -> &'static aws_sdk_s3::Client {
 }
 
 async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
-    info!("Received event: {:#?}", event);
-
     let data = event.payload.aws_logs.data;
 
-    let from_lambda = data.log_stream.replace("/aws/lambda/", "");
+    let from_lambda = data.log_group.replace("/aws/lambda/", "");
     let function_name = from_lambda.replace("lambda-benchmark-", "");
     let tokens = function_name.split("-").collect::<Vec<&str>>();
 
