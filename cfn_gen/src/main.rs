@@ -198,7 +198,7 @@ Resources:",
         for architecture in &runtime.architectures {
             let lambda_name = format!(
                 "LambdaBenchmark{}{}",
-                &runtime.display_name.replace(['-', '_', '.'], ""),
+                &runtime.display_name.replace(['-', '_', '.', ','], ""),
                 &architecture.replace('_', "").to_uppercase(),
             );
             builder.push_str(&format!(
@@ -250,7 +250,7 @@ Resources:",
             let key = format!("runtimes/{}_{}.zip", &runtime.path, &architecture);
             let lambda_name = format!(
                 "LambdaBenchmark{}{}",
-                &runtime.display_name.replace(['-', '_', '.'], ""),
+                &runtime.display_name.replace(['-', '_', '.', ','], ""),
                 &architecture.replace('_', "").to_uppercase(),
             );
             let function_name = format!("lambda-benchmark-{}-{}", &runtime.path, &architecture);
@@ -358,7 +358,7 @@ Resources:",
             let runtime_arch = format!("{}-{}", &runtime.path, &architecture_filtered);
             let lambda_name = format!(
                 "LambdaBenchmark{}{}",
-                &runtime.display_name.replace(['-', '_'], ""),
+                &runtime.display_name.replace(['-', '_', '.', ','], ""),
                 &architecture.replace('_', "").to_uppercase()
             );
             builder.push_str(&format!(
