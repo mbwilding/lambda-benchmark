@@ -133,7 +133,7 @@ pub fn draw_graph<F>(
         .width(ui.available_width())
         .height(ui.available_height())
         .x_axis_label("Memory Allocated (MB)")
-        .y_axis_label(&y_axis)
+        .y_axis_label(y_axis)
         .auto_bounds_x()
         .auto_bounds_y()
         .show_x(true)
