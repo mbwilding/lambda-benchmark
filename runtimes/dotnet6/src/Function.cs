@@ -12,7 +12,7 @@ namespace Lambda;
 public class Function
 {
     // ReSharper disable once UnusedMember.Global
-    public async Task<string> Handler(ILambdaContext context)
+    public async Task Handler(ILambdaContext context)
     {
         var iterations = Convert.ToInt32(Environment.GetEnvironmentVariable("ITERATIONS_CODE"));
         var bucketName = Environment.GetEnvironmentVariable("BUCKET_NAME");
@@ -38,7 +38,5 @@ public class Function
             BucketName = bucketName,
             Key = bucketKey
         }).ConfigureAwait(false);
-
-        return context.LogStreamName;
     }
 }

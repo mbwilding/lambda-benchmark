@@ -17,6 +17,4 @@ exports.handler = async (event, context) => {
     }
 
     await s3.send(new DeleteObjectCommand({ Bucket: bucket_name, Key: bucket_key }));
-
-    return context.logStreamName;
 };

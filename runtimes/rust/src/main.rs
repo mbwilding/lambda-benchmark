@@ -10,7 +10,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
+async fn func(event: LambdaEvent<Value>) -> Result<()> {
     let iterations = std::env::var("ITERATIONS_CODE")?.parse::<i32>()?;
     let bucket_name = std::env::var("BUCKET_NAME")?;
     let bucket_key = format!("test/{}/test.txt", event.context.env_config.function_name);
@@ -35,5 +35,5 @@ async fn func(event: LambdaEvent<Value>) -> Result<String, Error> {
         .send()
         .await?;
 
-    Ok(event.context.env_config.log_stream)
+    Ok(())
 }
