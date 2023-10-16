@@ -1,12 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use egui::Vec2;
-
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init();
 
-    let size: Vec2 = [900.0, 600.0].into();
+    let size: egui::Vec2 = [900.0, 600.0].into();
 
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(size),
