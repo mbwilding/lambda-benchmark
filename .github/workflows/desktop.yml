@@ -1,0 +1,36 @@
+name: Frontend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+      #- name: "Set up cargo cache"
+      #  uses: Swatinem/rust-cache@v2
+      - name: "Targets"
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          rustup target add x86_64-unknown-linux-gnu
+          rustup target add x86_64-apple-darwin
+      - name: "Build"
+        run: |
+          cd frontend
+          cargo build --release --target x86_64-pc-windows-gnu
+          cargo build --release --target x86_64-unknown-linux-gnu
+          cargo build --release --target x86_64-apple-darwin
+
+          parameters_json=$(yq -o=json '.' parameters.yml)
+          bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)-public
+          aws s3 sync s3://$bucket_name/releases/ target/
