@@ -91,6 +91,28 @@ Globals:
 Resources:",
     );
 
+    // Bucket
+    builder.push_str(&format!(
+        r#"
+  BucketPublic:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: {}-public
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketPublic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: arn:aws:s3:::{}-public/*"#,
+        &parameters.bucket_name, &parameters.bucket_name
+    ));
+
     // IAM Roles
     builder.push_str(&format!(
         r#"
@@ -141,18 +163,16 @@ Resources:",
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action:
-                  - s3:ListBucket
+                Action: s3:ListBucket
                 Resource: arn:aws:s3:::{}
               - Effect: Allow
                 Action:
-                  - s3:ListBucket
                   - s3:GetObject
                   - s3:DeleteObject
                 Resource: arn:aws:s3:::{}/results/*
               - Effect: Allow
                 Action: s3:PutObject
-                Resource: arn:aws:s3:::{}/reports/*"#,
+                Resource: arn:aws:s3:::{}-public/reports/*"#,
         &parameters.bucket_name, &parameters.bucket_name, &parameters.bucket_name
     ));
 
@@ -251,12 +271,15 @@ Resources:",
       Role: !GetAtt RoleReportGenerator.Arn
       CodeUri:
         Key: backing/report_generator.zip
+      Environment:
+        Variables:
+          BUCKET_NAME_PUBLIC: {}-public
   LogsReportGenerator:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/benchmark-report-generator
       RetentionInDays: {}"#,
-        &parameters.log_retention_in_days
+        &parameters.bucket_name, &parameters.log_retention_in_days
     ));
 
     // Runtime Lambda functions

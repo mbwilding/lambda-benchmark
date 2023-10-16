@@ -51,15 +51,9 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(_event: LambdaEvent<Value>) -> Result<()> {
-    let bucket = std::env::var("BUCKET_NAME")?;
-    debug!("Bucket: {}", bucket);
-
+    let bucket = std::env::var("BUCKET_NAME_PUBLIC")?;
     let aws_config = aws_config::load_from_env().await;
-    debug!("AWS config collected");
-
     let s3 = aws_sdk_s3::Client::new(&aws_config);
-    debug!("S3 client created");
-
     let objects = list(&s3, &bucket, "results/").await?;
     info!("Runs found: {})", objects.len());
 
