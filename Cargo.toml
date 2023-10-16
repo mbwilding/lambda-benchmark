@@ -7,5 +7,6 @@ members = [
     "report_generator"
 ]
 exclude = [
-    "frontend"
+    "frontend",
+    "runtimes/rust"
 ]

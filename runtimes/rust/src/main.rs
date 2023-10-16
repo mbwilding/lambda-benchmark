@@ -1,3 +1,4 @@
+use anyhow::Result;
 use aws_smithy_http::byte_stream::ByteStream;
 use bytes::Bytes;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
