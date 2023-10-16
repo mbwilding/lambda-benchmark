@@ -10,10 +10,12 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Deserialize)]
 pub struct Report {
-    iteration: u8,
     duration: f32,
+    billed_duration: u32,
     max_memory_used: u16,
-    init_duration: f32,
+    init_duration: Option<f32>,
+    restore_duration: Option<f32>,
+    billed_restore_duration: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,18 +73,23 @@ fn calculate_averages(
                     .sum::<f32>()
                     / total_count;
 
-                // let avg_init_duration: f32 =
-                //     reports.iter().map(|r| r.init_duration).sum::<f32>() / total_count;
+                let init_durations: Vec<f32> = iterations
+                    .iter()
+                    .filter_map(|r| r.init_duration.map(f32::from))
+                    .collect();
 
-                let init_duration = iterations.first().unwrap().init_duration;
+                let avg_init_duration = if !init_durations.is_empty() {
+                    init_durations.iter().sum::<f32>() / init_durations.len() as f32
+                } else {
+                    0.0
+                };
 
                 let average = ReportAverage {
                     duration: avg_duration as f64,
                     max_memory_used: avg_max_memory as f64,
-                    init_duration: init_duration as f64,
+                    init_duration: avg_init_duration as f64,
                 };
 
-                // Insert the average into our return structure.
                 averages
                     .entry(runtime.clone())
                     .or_default()

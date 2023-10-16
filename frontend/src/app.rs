@@ -94,9 +94,11 @@ impl eframe::App for LambdaBenchmark {
                             );
 
                             let cold_start = memory_map.first_key_value().unwrap().1.init_duration;
+                            let max_memory =
+                                memory_map.first_key_value().unwrap().1.max_memory_used;
                             let name = format!(
-                                "{} [{}] | Cold Start: {:06.2} ms",
-                                runtime, architecture, cold_start
+                                "{} [{}] | Cold Start: {:06.2} ms | Max Memory: {:06.2} MB",
+                                runtime, architecture, cold_start, max_memory
                             );
 
                             plot.line(
