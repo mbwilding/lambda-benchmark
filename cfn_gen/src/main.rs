@@ -479,7 +479,7 @@ Resources:",
               - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
-                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
                 Resource:"#, &parameters.bucket_name, &parameters.bucket_name));
 
     for runtime in runtimes.iter() {
