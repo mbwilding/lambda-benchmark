@@ -92,12 +92,12 @@ Resources:",
     );
 
     // IAM Roles
-    builder.push_str(
+    builder.push_str(&format!(
         r#"
   RoleLogProcessor:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "iam-${AWS::Region}-lambda-benchmark-log-processor-role"
+      RoleName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-log-processor-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -117,7 +117,8 @@ Resources:",
               - Effect: Allow
                 Action: s3:PutObject
                 Resource: arn:aws:s3:::{}/results/*"#,
-    );
+        &parameters.bucket_name
+    ));
 
     builder.push_str(&format!(
         r#"
