@@ -1,6 +1,7 @@
-use crate::{calculate_averages, load_latest_report, str_to_color32, Report, ReportAverage};
-use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
-use std::collections::BTreeMap;
+use crate::{calculate_averages, draw_graph, load_latest_report, Metric, Report, ReportAverage};
+use eframe::emath::Align;
+use egui::Slider;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -9,7 +10,16 @@ pub struct LambdaBenchmark {
     report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
 
     #[serde(skip)]
-    average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,
+    pub average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,
+
+    #[serde(skip)]
+    architectures: Vec<String>,
+
+    pub selected_architecture: String,
+
+    pub selected_metric: Metric,
+
+    pub line_width: f32,
 }
 
 impl Default for LambdaBenchmark {
@@ -17,7 +27,27 @@ impl Default for LambdaBenchmark {
         let report = load_latest_report().unwrap_or_default();
         let average = calculate_averages(&report);
 
-        Self { report, average }
+        let architectures: Vec<String> = report
+            .iter()
+            .flat_map(|(_, architecture_map)| {
+                architecture_map.keys().cloned().collect::<Vec<String>>()
+            })
+            .collect::<BTreeSet<String>>()
+            .into_iter()
+            .collect::<Vec<String>>();
+
+        let selected_architecture = "arm64".to_string();
+        let selected_metric = Metric::ColdStart;
+        let line_width = 3.2;
+
+        Self {
+            report,
+            average,
+            architectures,
+            selected_architecture,
+            selected_metric,
+            line_width,
+        }
     }
 }
 
@@ -35,95 +65,80 @@ impl eframe::App for LambdaBenchmark {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            _frame.close();
+                ui.with_layout(egui::Layout::left_to_right(Align::Center), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.heading("Architecture");
+                        let architectures = self.architectures.clone();
+                        for architecture in architectures {
+                            ui.selectable_value(
+                                &mut self.selected_architecture,
+                                architecture.clone(),
+                                architecture.to_string(),
+                            );
+                        }
+
+                        ui.separator();
+
+                        ui.heading("Metric");
+                        for metric in Metric::variants() {
+                            ui.selectable_value(
+                                &mut self.selected_metric,
+                                *metric,
+                                metric.to_string(),
+                            );
                         }
                     });
-                    ui.add_space(16.0);
-                }
-
-                egui::widgets::global_dark_light_mode_buttons(ui);
-            });
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Lambda Benchmark");
-
-            ui.separator();
-
-            ui.horizontal(|ui| {
-                ui.collapsing("Instructions", |ui| {
-                    ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
-                    ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
-                    if cfg!(target_arch = "wasm32") {
-                        ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
-                    } else if cfg!(target_os = "macos") {
-                        ui.label("Zoom with ctrl / ⌘ + scroll.");
-                    } else {
-                        ui.label("Zoom with ctrl + scroll.");
-                    }
-                    ui.label("Reset view with double-click.");
                 });
-            });
-
-            ui.separator();
-
-            let _ = Plot::new("lines_demo")
-                .legend(Legend::default())
-                .width(ui.available_width())
-                .height(ui.available_height())
-                .x_axis_label("Memory (MB)")
-                .y_axis_label("Duration (ms)")
-                .auto_bounds_x()
-                .auto_bounds_y()
-                //.clamp_grid(true)
-                //.link_cursor()
-                .show(ui, |plot| {
-                    for (runtime, architecture_map) in &self.average {
-                        for (architecture, memory_map) in architecture_map {
-                            let plot_points = PlotPoints::new(
-                                memory_map
-                                    .iter()
-                                    .map(|(&memory_allocated, report_average)| {
-                                        [memory_allocated as f64, report_average.duration]
-                                    })
-                                    .collect::<Vec<[f64; 2]>>(),
-                            );
-
-                            let cold_start = memory_map.first_key_value().unwrap().1.init_duration;
-                            let max_memory =
-                                memory_map.first_key_value().unwrap().1.max_memory_used;
-                            let name = format!(
-                                "{} [{}] | Cold Start: {:06.2} ms | Max Memory: {:06.2} MB",
-                                runtime, architecture, cold_start, max_memory
-                            );
-
-                            plot.line(
-                                Line::new(plot_points)
-                                    .name(name)
-                                    .style(LineStyle::Solid)
-                                    .color(str_to_color32(runtime)),
-                            );
-
-                            break; // TODO: Remove this break
-                        }
-                    }
-                })
-                .response;
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("Powered by ");
+                ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
+                    egui::widgets::global_dark_light_mode_buttons(ui);
                     ui.hyperlink_to(
-                        "Lambda Benchmark",
+                        "Source Code",
                         "https://github.com/mbwilding/lambda-benchmark",
                     );
                 });
             });
+
+            egui::CollapsingHeader::new("Settings")
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.add(
+                        Slider::new(&mut self.line_width, 0.0..=10.0)
+                            .logarithmic(false)
+                            .clamp_to_range(true)
+                            .smart_aim(true)
+                            .text("Line Width")
+                            .trailing_fill(true),
+                    );
+                });
+
+            ui.collapsing("Instructions", |ui| {
+                ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
+                ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
+                if cfg!(target_arch = "wasm32") {
+                    ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
+                } else if cfg!(target_os = "macos") {
+                    ui.label("Zoom with ctrl / ⌘ + scroll.");
+                } else {
+                    ui.label("Zoom with ctrl + scroll.");
+                }
+                ui.label("Reset view with double-click.");
+            });
+        });
+
+        egui::CentralPanel::default().show(ctx, |ui| match self.selected_metric {
+            Metric::ColdStart => {
+                draw_graph(ui, "Cold Start", "Duration", "ms", self, |avg| {
+                    avg.init_duration
+                });
+            }
+            Metric::Duration => {
+                draw_graph(ui, "Duration", "Duration", "ms", self, |avg| avg.duration);
+            }
+            Metric::Memory => {
+                draw_graph(ui, "Memory Used", "Max Memory Used", "MB", self, |avg| {
+                    avg.max_memory_used
+                });
+            }
         });
     }
 

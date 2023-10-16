@@ -1,13 +1,17 @@
-#![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use egui::Vec2;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init();
 
+    let size: Vec2 = [900.0, 600.0].into();
+
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some([400.0, 300.0].into()),
-        min_window_size: Some([300.0, 220.0].into()),
+        initial_window_size: Some(size),
+        min_window_size: Some(size),
+        centered: true,
         ..Default::default()
     };
     eframe::run_native(

@@ -1,13 +1,16 @@
-#![warn(clippy::all, rust_2018_idioms)]
-
 mod app;
 
 use anyhow::Result;
 pub use app::LambdaBenchmark;
-use egui::Color32;
-use serde::Deserialize;
+use egui::{Color32, Ui};
+use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
+use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::BTreeMap;
+use std::fmt::{Display, Formatter};
+use std::hash::{Hash, Hasher};
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Report {
     duration: f32,
@@ -44,12 +47,14 @@ pub fn load_latest_report() -> Result<BTreeMap<String, BTreeMap<String, BTreeMap
 }
 
 pub fn str_to_color32(str: &str) -> Color32 {
-    let hash = str.bytes().fold(0_u64, |accumulator, byte| {
-        accumulator.wrapping_mul(37).wrapping_add(byte as u64)
-    });
-    let r = (hash as u8);
-    let g = ((hash >> 5) as u8);
-    let b = ((hash >> 13) as u8);
+    let mut hasher = DefaultHasher::new();
+    str.hash(&mut hasher);
+    let hash = hasher.finish();
+
+    let r = hash as u8;
+    let g = (hash >> 8) as u8;
+    let b = (hash >> 16) as u8;
+
     Color32::from_rgb(r, g, b)
 }
 
@@ -101,4 +106,88 @@ fn calculate_averages(
     }
 
     averages
+}
+
+pub fn draw_graph<F>(
+    ui: &mut Ui,
+    title: &str,
+    y_axis_label: &str,
+    y_axis_unit: &str,
+    self_: &mut LambdaBenchmark,
+    value_selector: F,
+) where
+    F: Fn(&ReportAverage) -> f64,
+{
+    let y_axis_unit_cloned = y_axis_unit.to_string();
+
+    let _ = Plot::new(format!("graph_{}", &title))
+        .legend(Legend::default())
+        .width(ui.available_width())
+        .height(ui.available_height())
+        .x_axis_label("Memory Allocated (MB)")
+        .y_axis_label(y_axis_label)
+        .auto_bounds_x()
+        .auto_bounds_y()
+        .show_x(true)
+        .show_y(true)
+        .allow_boxed_zoom(false)
+        //.allow_drag(false)
+        //.allow_scroll(false)
+        //.allow_zoom(false)
+        //.allow_double_click_reset(false)
+        //.clamp_grid(true)
+        //.link_cursor()
+        .label_formatter(move |name, value| {
+            if !name.is_empty() {
+                format!("{} MB | {:.2} {}", value.x, value.y, y_axis_unit_cloned)
+            } else {
+                "".to_owned()
+            }
+        })
+        .show(ui, |plot| {
+            for (runtime, architecture_map) in &self_.average {
+                let (_architecture, memory_map) = architecture_map
+                    .get_key_value(&self_.selected_architecture)
+                    .expect("Invalid architecture");
+
+                let plot_points = PlotPoints::new(
+                    memory_map
+                        .iter()
+                        .map(|(&memory_allocated, report_average)| {
+                            [memory_allocated as f64, value_selector(report_average)]
+                        })
+                        .collect::<Vec<[f64; 2]>>(),
+                );
+
+                plot.line(
+                    Line::new(plot_points)
+                        .name(runtime)
+                        .style(LineStyle::Solid)
+                        .width(self_.line_width), //.color(str_to_color32(runtime)),
+                );
+            }
+        });
+}
+
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub enum Metric {
+    ColdStart,
+    Duration,
+    Memory,
+}
+
+impl Metric {
+    pub fn variants() -> &'static [Metric] {
+        &[Metric::ColdStart, Metric::Duration, Metric::Memory]
+    }
+}
+
+impl Display for Metric {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Metric::ColdStart => write!(f, "Cold Start"),
+            Metric::Duration => write!(f, "Duration"),
+            Metric::Memory => write!(f, "Max Memory"),
+        }
+    }
 }
