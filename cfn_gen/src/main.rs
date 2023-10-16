@@ -371,7 +371,7 @@ Resources:",
                             ItemsPath: $.iterations
                             ItemSelector:
                               iteration.$: $$.Map.Item.Value
-                              function_name: GetAtt {}.Arn
+                              function_name: !GetAtt {}.Arn
                               memory_array.$: $.memory_array
                             MaxConcurrency: 1
                             ItemProcessor:
