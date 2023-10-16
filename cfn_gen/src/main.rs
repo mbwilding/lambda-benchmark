@@ -178,7 +178,7 @@ Resources:",
     ));
 
     // Backing Lambda functions
-    builder.push_str(
+    builder.push_str(&format!(
         r#"
   LambdaLogProcessor:
     Type: AWS::Serverless::Function
@@ -191,8 +191,16 @@ Resources:",
       Role: !GetAtt RoleLogProcessor.Arn
       CodeUri:
         Key: backing/log_processor.zip
+      Environment:
+        Variables:
+          RUNTIMES: "{}"
       Events:"#,
-    );
+        runtimes
+            .iter()
+            .map(|r| r.path.clone())
+            .collect::<Vec<String>>()
+            .join(",")
+    ));
 
     for runtime in runtimes.iter() {
         for architecture in &runtime.architectures {
