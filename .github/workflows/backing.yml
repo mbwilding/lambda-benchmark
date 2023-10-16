@@ -29,8 +29,8 @@ jobs:
           repo: "cargo-lambda/cargo-lambda"
           platform: linux
           arch: x86_64
-      - name: Set up cargo cache
-        uses: Swatinem/rust-cache@v2
+      #- name: "Set up cargo cache"
+      #  uses: Swatinem/rust-cache@v2
       - name: "Build backing and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
