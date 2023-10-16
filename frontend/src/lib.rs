@@ -30,20 +30,10 @@ pub struct ReportAverage {
 
 pub fn load_latest_report() -> Result<BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>>
 {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        use std::fs::File;
+    let url =
+        "https://bkt-lambda-benchmark-public.s3.ap-southeast-2.amazonaws.com/reports/latest.json";
 
-        let file = File::open("reports/latest.json").expect("Unable to open file");
-        let reader = std::io::BufReader::new(file);
-        let report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
-            serde_json::from_reader(reader).expect("Unable to parse file");
-
-        Ok(report)
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {}
+    Ok(reqwest::blocking::get(url)?.json()?)
 }
 
 pub fn str_to_color32(str: &str) -> Color32 {
