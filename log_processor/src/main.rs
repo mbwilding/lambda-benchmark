@@ -79,11 +79,7 @@ async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
 
     let from_lambda = data.log_group.replace("/aws/lambda/", "");
     let function_name = from_lambda.replace("lambda-benchmark-", "");
-    let tokens = function_name.split("-").collect::<Vec<&str>>();
-
-    if tokens.len() < 2 {
-        panic!("Invalid function name: {}", function_name)
-    }
+    let tokens = function_name.split('-').collect::<Vec<&str>>();
 
     let runtime = tokens[0];
     let architecture = tokens[1..].join("_");
