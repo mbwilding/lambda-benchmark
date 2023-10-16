@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 #[serde(default)]
 pub struct LambdaBenchmark {
     #[serde(skip)]
-    pub(crate) report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
+    pub report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
 
     #[serde(skip)]
     pub average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,

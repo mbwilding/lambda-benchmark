@@ -1,4 +1,5 @@
 mod app;
+mod temp;
 
 pub use app::LambdaBenchmark;
 use egui::{Color32, Ui};
@@ -37,22 +38,12 @@ pub fn load_latest_report() -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, V
     }
     #[cfg(target_arch = "wasm32")]
     {
-        let (sender, promise) = poll_promise::Promise::new();
-        let request = ehttp::Request::get(url);
-        ehttp::fetch(request, move |response| {
-            let resource = response.map(|response| {
-                let report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
-                    serde_json::from_slice(response.bytes.as_slice()).unwrap();
-                report
-            });
-            sender.send(resource);
-        });
-
-        let response = promise.block_and_take().unwrap();
-        response
+        // TODO: Fix this for wasm so it fetches
+        serde_json::from_str(temp::JSON).unwrap()
     }
 }
 
+#[allow(dead_code)]
 pub fn str_to_color32(str: &str) -> Color32 {
     let mut hasher = DefaultHasher::new();
     str.hash(&mut hasher);
