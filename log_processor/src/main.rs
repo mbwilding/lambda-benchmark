@@ -81,12 +81,12 @@ async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
     let function_name = from_lambda.replace("lambda-benchmark-", "");
     let tokens = function_name.split("-").collect::<Vec<&str>>();
 
-    if tokens.len() != 2 {
+    if tokens.len() < 2 {
         panic!("Invalid function name: {}", function_name)
     }
 
     let runtime = tokens[0];
-    let architecture = tokens[1];
+    let architecture = tokens[1..].join("_");
 
     if !get_runtimes().await.iter().any(|s| s == runtime) {
         panic!("Runtime {} not found in RUNTIMES", runtime);
