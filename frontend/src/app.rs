@@ -124,7 +124,7 @@ impl eframe::App for LambdaBenchmark {
             ui.horizontal(|ui| {
                 ui.heading("Test case:");
                 ui.label(
-                    "Write the current iteration value to an S3 key 50 times in succession, then delete it.",
+                    "Write the current iteration value to an S3 key 500 times in succession, then deletes it. The test is executed 10 times, and the average of the 10 runs is displayed.",
                 );
 
                 ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {

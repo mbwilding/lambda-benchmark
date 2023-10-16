@@ -175,6 +175,7 @@ Resources:",
                 Resource: arn:aws:s3:::{}
               - Effect: Allow
                 Action:
+                  - s3:ListBucket
                   - s3:GetObject
                   - s3:DeleteObject
                 Resource: arn:aws:s3:::{}/results/*
