@@ -51,28 +51,29 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(_event: LambdaEvent<Value>) -> Result<()> {
-    let bucket = std::env::var("BUCKET_NAME_PUBLIC")?;
+    let bucket_name = std::env::var("BUCKET_NAME")?;
+    let bucket_name_public = std::env::var("BUCKET_NAME_PUBLIC")?;
     let aws_config = aws_config::load_from_env().await;
     let s3 = aws_sdk_s3::Client::new(&aws_config);
-    let objects = list(&s3, &bucket, "results/").await?;
+    let objects = list(&s3, &bucket_name, "results/").await?;
     info!("Runs found: {})", objects.len());
 
-    let runs = fetch_runs(&s3, &bucket, &objects).await?;
+    let runs = fetch_runs(&s3, &bucket_name, &objects).await?;
     info!("Runs fetched: {}", runs.len());
 
     let grouped = group_and_sort(&runs);
 
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    put(&s3, &bucket, &format!("reports/{}.json", today), &grouped).await?;
+    put(&s3, &bucket_name_public, &format!("reports/{}.json", today), &grouped).await?;
     put(
         &s3,
-        &bucket,
+        &bucket_name_public,
         &format!("reports/{}.json", "latest"),
         &grouped,
     )
     .await?;
 
-    delete_many(&s3, &bucket, &objects).await?;
+    delete_many(&s3, &bucket_name, &objects).await?;
 
     Ok(())
 }
