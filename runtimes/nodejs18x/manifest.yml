@@ -1,4 +1,4 @@
-display_name: "NodeJS-18x"
+display_name: "NodeJS18.x"
 runtime: "nodejs18.x"
 handler: "index.handler"
 path: "nodejs18x"

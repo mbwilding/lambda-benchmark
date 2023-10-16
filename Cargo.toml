@@ -2,9 +2,11 @@
 resolver = "2"
 members = [
     "cfn_gen",
+    "shared",
     "log_processor",
     "report_generator"
 ]
 exclude = [
-    "frontend"
+    "frontend",
+    "runtimes/rust"
 ]

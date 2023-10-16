@@ -1,4 +1,4 @@
-display_name: "Python3-11"
+display_name: "Python3.11"
 runtime: "python3.11"
 handler: "index.handler"
 path: "python311"
