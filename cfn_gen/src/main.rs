@@ -108,8 +108,15 @@ Resources:",
             Action:
               - sts:AssumeRole
       Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"#,
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: !Sub "iam-${{AWS::Region}}-lambda-benchmark-report-generator-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: arn:aws:s3:::{}/results/*"#,
     );
 
     builder.push_str(&format!(
