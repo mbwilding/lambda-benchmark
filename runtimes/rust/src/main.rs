@@ -1,4 +1,3 @@
-use anyhow::Result;
 use aws_smithy_http::byte_stream::ByteStream;
 use bytes::Bytes;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
@@ -11,7 +10,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<()> {
+async fn func(event: LambdaEvent<Value>) -> Result<(), Error> {
     let iterations = std::env::var("ITERATIONS_CODE")?.parse::<i32>()?;
     let bucket_name = std::env::var("BUCKET_NAME")?;
     let bucket_key = format!("test/{}/test.txt", event.context.env_config.function_name);

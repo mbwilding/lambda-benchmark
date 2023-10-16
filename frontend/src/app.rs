@@ -68,6 +68,7 @@ impl eframe::App for LambdaBenchmark {
                 ui.with_layout(egui::Layout::left_to_right(Align::Center), |ui| {
                     ui.horizontal(|ui| {
                         ui.heading("Architecture");
+                        ui.separator();
                         let architectures = self.architectures.clone();
                         for architecture in architectures {
                             ui.selectable_value(
@@ -80,6 +81,7 @@ impl eframe::App for LambdaBenchmark {
                         ui.separator();
 
                         ui.heading("Metric");
+                        ui.separator();
                         for metric in Metric::variants() {
                             ui.selectable_value(
                                 &mut self.selected_metric,
@@ -89,17 +91,10 @@ impl eframe::App for LambdaBenchmark {
                         }
                     });
                 });
-                ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
-                    egui::widgets::global_dark_light_mode_buttons(ui);
-                    ui.hyperlink_to(
-                        "Source Code",
-                        "https://github.com/mbwilding/lambda-benchmark",
-                    );
-                });
             });
 
             egui::CollapsingHeader::new("Settings")
-                .default_open(true)
+                .default_open(false)
                 .show(ui, |ui| {
                     ui.add(
                         Slider::new(&mut self.line_width, 0.0..=10.0)
@@ -111,7 +106,7 @@ impl eframe::App for LambdaBenchmark {
                     );
                 });
 
-            ui.collapsing("Instructions", |ui| {
+            ui.collapsing("Guide", |ui| {
                 ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
                 ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
                 if cfg!(target_arch = "wasm32") {
@@ -122,6 +117,23 @@ impl eframe::App for LambdaBenchmark {
                     ui.label("Zoom with ctrl + scroll.");
                 }
                 ui.label("Reset view with double-click.");
+            });
+        });
+
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.heading("Test case:");
+                ui.label(
+                    "Write the current iteration value to an S3 key 50 times in succession, then delete it.",
+                );
+
+                ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
+                    egui::widgets::global_dark_light_mode_buttons(ui);
+                    ui.hyperlink_to(
+                        "Source Code",
+                        "https://github.com/mbwilding/lambda-benchmark",
+                    );
+                });
             });
         });
 

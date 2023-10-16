@@ -3,7 +3,7 @@ mod temp;
 
 pub use app::LambdaBenchmark;
 use egui::{Color32, Ui};
-use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
+use egui_plot::{uniform_grid_spacer, Legend, Line, LineStyle, Plot, PlotPoints};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::BTreeMap;
@@ -127,15 +127,7 @@ pub fn draw_graph<F>(
         .y_axis_label(y_axis)
         .auto_bounds_x()
         .auto_bounds_y()
-        .show_x(true)
-        .show_y(true)
-        .allow_boxed_zoom(false)
-        //.allow_drag(false)
-        //.allow_scroll(false)
-        //.allow_zoom(false)
-        //.allow_double_click_reset(false)
-        //.clamp_grid(true)
-        //.link_cursor()
+        .x_grid_spacer(uniform_grid_spacer(|_| [1024.0, 128.0, 12.8]))
         .label_formatter(move |_name, value| {
             format!(
                 "{:.0} (MB) | {:.2} ({})",
