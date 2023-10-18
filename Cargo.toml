@@ -13,6 +13,7 @@ exclude = [
 
 [workspace.package]
 version = "0.1.0"
+edition = "2021"
 authors = ["Matthew Wilding <mbwilding@gmail.com>"]
 homepage = "https://mbwilding.github.io/lambda-benchmark"
 repository = "https://github.com/mbwilding/lambda-benchmark"
