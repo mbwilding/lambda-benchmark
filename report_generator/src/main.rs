@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use shared::s3::{delete_many, get_from_json, list, put};
 use std::collections::BTreeMap;
-use tracing::{debug, info};
+use tracing::info;
 
 #[derive(Debug, Deserialize)]
 struct Run {
@@ -64,7 +64,13 @@ async fn func(_event: LambdaEvent<Value>) -> Result<()> {
     let grouped = group_and_sort(&runs);
 
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    put(&s3, &bucket_name_public, &format!("reports/{}.json", today), &grouped).await?;
+    put(
+        &s3,
+        &bucket_name_public,
+        &format!("reports/{}.json", today),
+        &grouped,
+    )
+    .await?;
     put(
         &s3,
         &bucket_name_public,

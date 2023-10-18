@@ -10,3 +10,14 @@ exclude = [
     "frontend",
     "runtimes/rust"
 ]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Matthew Wilding <mbwilding@gmail.com>"]
+homepage = "https://mbwilding.github.io/lambda-benchmark"
+repository = "https://github.com/mbwilding/lambda-benchmark"
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
+keywords = ["lambda", "aws", "performance", "benchmark", "rust"]
+description = "A framework for benchmarking AWS Lambda functions"
