@@ -106,7 +106,7 @@ impl eframe::App for LambdaBenchmark {
                     );
                 });
 
-            ui.collapsing("Guide", |ui| {
+            ui.collapsing("Instructions", |ui| {
                 ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
                 ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
                 if cfg!(target_arch = "wasm32") {
@@ -124,7 +124,7 @@ impl eframe::App for LambdaBenchmark {
             ui.horizontal(|ui| {
                 ui.heading("Test case:");
                 ui.label(
-                    "Write the current iteration value to an S3 key 500 times in succession, then deletes it. The test is executed 10 times, and the average of the 10 runs is displayed.",
+                    "Writes the current iteration value to an S3 key 500 times, then deletes it. It's executed 10 times per runtime/architecture/memory and the average is displayed.",
                 );
 
                 ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
