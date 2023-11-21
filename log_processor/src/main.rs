@@ -27,16 +27,7 @@ struct Run {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    tracing_subscriber::fmt()
-        .json()
-        .with_max_level(tracing::Level::INFO)
-        .with_current_span(false)
-        .with_span_list(false)
-        .with_ansi(false)
-        .without_time()
-        .with_target(false)
-        .with_line_number(true)
-        .init();
+    shared::log::init();
 
     lambda_runtime::run(service_fn(func)).await?;
     Ok(())

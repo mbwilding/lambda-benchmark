@@ -7,8 +7,10 @@ description.workspace = true
 
 [dependencies]
 anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
 aws-config = "0.56"
 aws-smithy-http = "0.56"
 aws-sdk-s3 = "0.33"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing-subscriber = { version = "0.3", features = ["fmt", "json"] }
+tracing = "0.1.37"
