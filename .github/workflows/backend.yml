@@ -1,4 +1,4 @@
-name: Backing
+name: Backend
 
 on:
   workflow_dispatch:
@@ -31,13 +31,13 @@ jobs:
           arch: x86_64
       #- name: "Set up cargo cache"
       #  uses: Swatinem/rust-cache@v2
-      - name: "Build backing and upload"
+      - name: "Build backend and upload"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           parameters_json=$(yq -o=json '.' parameters.yml)
           bucket_name=$(jq -r '.bucket_name' <<< $parameters_json)
-          
+
           bucket_status=$(aws s3api head-bucket --bucket $bucket_name --region $AWS_REGION 2>&1) || true
 
           if echo $bucket_status | grep -q 'Not Found'; then
@@ -49,7 +49,7 @@ jobs:
           else
             echo "Bucket $bucket_name exists"
           fi
-          
+
           build_lambdas() {
             bin_names=("$@")
             for bin_name in "${bin_names[@]}"; do
@@ -62,9 +62,9 @@ jobs:
 
           for src in $(find target/lambda -name "bootstrap.zip"); do
             name=$(basename "$(dirname "$src")" | tr '_' '-')
-            s3_key="backing/${name}.zip"
+            s3_key="backend/${name}.zip"
             dst="s3://$bucket_name/$s3_key"
-          
+
             aws s3 cp "$src" "$dst" > /dev/null 2>&1
             echo "Uploaded '$src' to 's3://$bucket_name/$s3_key'"
 

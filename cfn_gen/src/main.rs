@@ -226,7 +226,7 @@ Resources:",
       Handler: bootstrap
       Role: !GetAtt RoleLogProcessor.Arn
       CodeUri:
-        Key: backing/log_processor.zip
+        Key: backend/log_processor.zip
       Environment:
         Variables:
           RUNTIMES: "{}"
@@ -279,7 +279,7 @@ Resources:",
       Handler: bootstrap
       Role: !GetAtt RoleReportGenerator.Arn
       CodeUri:
-        Key: backing/report_generator.zip
+        Key: backend/report_generator.zip
       Environment:
         Variables:
           BUCKET_NAME_PUBLIC: {}-public

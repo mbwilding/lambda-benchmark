@@ -36,7 +36,7 @@ jobs:
           bucket_status=$(aws s3api head-bucket --bucket $bucket_name --region $AWS_REGION 2>&1) || true
 
           if echo $bucket_status | grep -q 'Not Found'; then
-            echo "Please deploy out 'backing' and 'runtimes' first"
+            echo "Please deploy out 'backend' and 'runtimes' first"
             exit 1
           fi
 

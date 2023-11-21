@@ -70,11 +70,11 @@ jobs:
                 echo "::group::Upload '$file_path' [$arch]"
                 aws s3 cp "$file" s3://$bucket_name/runtimes/ > /dev/null 2>&1
                 echo "Uploaded '$file' to 's3://$bucket_name/$s3_key'"
-          
+
                 for memory_size in $memory_sizes
                 do
                   function_name="lambda-benchmark-${path}-${arch}-${memory_size}"
-          
+
                   if aws lambda get-function --function-name "$function_name" > /dev/null 2>&1; then
                     aws lambda update-function-code --function-name "$function_name" --s3-bucket "$bucket_name" --s3-key "$s3_key" > /dev/null
                     echo "Function '$function_name' code updated"
