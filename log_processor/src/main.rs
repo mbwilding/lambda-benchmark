@@ -39,7 +39,7 @@ async fn get_runtimes() -> &'static Vec<String> {
         .get_or_init(|| async {
             let runtimes_str = std::env::var("RUNTIMES").expect("RUNTIMES not set");
             let runtimes_vec = runtimes_str
-                .split(",")
+                .split(',')
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
             runtimes_vec
@@ -94,16 +94,13 @@ async fn func(event: LambdaEvent<LogsEvent>) -> Result<(), Error> {
                 max_memory_used: cap["maxMemoryUsed"].parse::<u16>()?,
                 init_duration: cap
                     .name("initDuration")
-                    .map(|m| m.as_str().parse::<f32>().ok())
-                    .flatten(),
+                    .and_then(|m| m.as_str().parse::<f32>().ok()),
                 restore_duration: cap
                     .name("restoreDuration")
-                    .map(|m| m.as_str().parse::<f32>().ok())
-                    .flatten(),
+                    .and_then(|m| m.as_str().parse::<f32>().ok()),
                 billed_restore_duration: cap
                     .name("billedRestoreDuration")
-                    .map(|m| m.as_str().parse::<u32>().ok())
-                    .flatten(),
+                    .and_then(|m| m.as_str().parse::<u32>().ok()),
             };
 
             info!(
