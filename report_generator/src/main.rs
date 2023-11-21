@@ -7,6 +7,8 @@ use shared::s3::{delete_many, get_from_json, list, put};
 use std::collections::BTreeMap;
 use tracing::info;
 
+type ReportMap = BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>;
+
 #[derive(Debug, Deserialize)]
 struct Run {
     runtime: String,
@@ -98,9 +100,8 @@ async fn fetch_runs(
     Ok(runs)
 }
 
-fn group_and_sort(runs: &[Run]) -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> {
-    let mut grouped: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> =
-        BTreeMap::new();
+fn group_and_sort(runs: &[Run]) -> ReportMap {
+    let mut grouped: ReportMap = ReportMap::new();
 
     for run in runs {
         let report = Report {

@@ -1,16 +1,16 @@
-use crate::{calculate_averages, draw_graph, load_latest_report, Metric, Report, ReportAverage};
+use crate::{calculate_averages, draw_graph, load_latest_report, AverageMap, Metric, ReportMap};
 use eframe::emath::Align;
 use egui::Slider;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct LambdaBenchmark {
     #[serde(skip)]
-    pub report: BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
+    pub report: ReportMap,
 
     #[serde(skip)]
-    pub average: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>,
+    pub average: AverageMap,
 
     #[serde(skip)]
     architectures: Vec<String>,

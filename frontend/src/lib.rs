@@ -10,6 +10,9 @@ use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+type ReportMap = BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>;
+type AverageMap = BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>>;
+
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Copy, Clone)]
 pub struct Report {
@@ -28,7 +31,7 @@ pub struct ReportAverage {
     init_duration: f64,
 }
 
-pub fn load_latest_report() -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>> {
+pub fn load_latest_report() -> ReportMap {
     let url =
         "https://bkt-lambda-benchmark-public.s3.ap-southeast-2.amazonaws.com/reports/latest.json";
 
@@ -56,11 +59,8 @@ pub fn str_to_color32(str: &str) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
-fn calculate_averages(
-    data: &BTreeMap<String, BTreeMap<String, BTreeMap<u16, Vec<Report>>>>,
-) -> BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>> {
-    let mut averages: BTreeMap<String, BTreeMap<String, BTreeMap<u16, ReportAverage>>> =
-        BTreeMap::new();
+fn calculate_averages(data: &ReportMap) -> AverageMap {
+    let mut averages: AverageMap = AverageMap::new();
 
     for (runtime, architecture_map) in data.iter() {
         for (architecture, memory_map) in architecture_map.iter() {
